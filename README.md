@@ -14,12 +14,5 @@ A Bengaluru-first clinic appointment concept, designed around Indian patient jou
 - **3D Graphics:** Three.js
 - **Deployment:** Vercel
 
-## 💻 Local Setup
-1. Clone the repository:
-   `git clone https://github.com/Revanth-revu/connect-care.git`
-2. Install dependencies:
-   `npm install`
-3. Create a `.env` file in the root directory and add your Supabase credentials:
-   ```env
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key# care-connect
+## 📱 Usage
+Log in as a Patient or Doctor using the provided demo credentials on the login screen to explore the interactive scheduling features.
