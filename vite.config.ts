@@ -5,5 +5,20 @@ export default defineConfig({
   base: '/',
   build: {
     outDir: 'dist',
+
+    rollupOptions: {
+      input: [
+        'index.html',
+        'src/pages/booking.html',
+        'src/pages/confirmation.html',
+        'src/pages/doctor-dashboard.html',
+        'src/pages/doctors.html',
+        'src/pages/login-doctor.html',
+        'src/pages/login-patient.html',
+        'src/pages/login.html',
+        'src/pages/patient-dashboard.html',
+        'src/pages/payment.html',
+      ],
+    },
   }
 })
