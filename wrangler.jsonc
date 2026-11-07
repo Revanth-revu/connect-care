@@ -1,5 +1,9 @@
 {
   "name": "care-connect",
-  "pages_build_output_dir": "./dist",
-  "compatibility_date": "2026-11-07"
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    // only if it's a single-page app with client-side routing:
+    "not_found_handling": "single-page-application"
+  }
 }
