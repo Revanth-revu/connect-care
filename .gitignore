@@ -1,4 +1,6 @@
+# =========================================
 # Logs
+# =========================================
 logs
 *.log
 npm-debug.log*
@@ -7,13 +9,17 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# =========================================
 # Dependencies and Builds
+# =========================================
 node_modules
 dist
 dist-ssr
 *.local
 
+# =========================================
 # Editor directories and files
+# =========================================
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -24,11 +30,23 @@ dist-ssr
 *.sln
 *.sw?
 
-# CRITICAL: Ignore Environment Variables so your secret keys aren't leaked!
+# =========================================
+# Environment Variables (CRITICAL SECURITY)
+# NEVER commit your .env files to GitHub!
+# =========================================
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# =========================================
+# Deployment Platform Folders
+# =========================================
+# Vercel
 .vercel
+
+# Cloudflare
+.wrangler
+.dev.vars
 .env*
