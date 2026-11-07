@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>One Click Schedule - CareConnect</title>
+  
+  <!-- Import Premium Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Poppins:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body class="home-page">
+  <!-- The 3D Background Canvas -->
+  <canvas id="bg"></canvas>
+
+  <main class="landing">
+    <!-- The Glass Card Container -->
+    <div class="hero-card">
+      
+      <!-- Custom Neon Logo -->
+      <div class="logo-anim" style="display: flex; justify-content: center; margin-bottom: 20px;">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 15px rgba(0, 191, 165, 0.8));">
+          <rect x="8" y="12" width="48" height="44" rx="8" stroke="#00BFA5" stroke-width="3" fill="rgba(0, 137, 123, 0.15)"/>
+          <path d="M8 24H56" stroke="#00BFA5" stroke-width="3"/>
+          <path d="M20 8V16" stroke="#00BFA5" stroke-width="3" stroke-linecap="round"/>
+          <path d="M44 8V16" stroke="#00BFA5" stroke-width="3" stroke-linecap="round"/>
+          <path d="M34 28L26 38H33L30 50L40 36H32L34 28Z" fill="#00BFA5" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <!-- Animated Title -->
+      <div class="logo text-anim-1" style="font-size: 2.6rem; line-height: 1.1; margin-bottom: 16px; font-family: 'Outfit', sans-serif; font-weight: 800; text-align: center;">
+        <span style="color: #ffffff; letter-spacing: 1px;">ONE CLICK</span><br>
+        <span style="font-size: 2.1rem; letter-spacing: 4px; color: #00BFA5; text-shadow: 0 0 15px rgba(0, 191, 165, 0.6);">SCHEDULE</span>
+      </div>
+
+      <!-- Animated Subtitle -->
+      <h1 class="tagline text-anim-2" style="font-size: 1.2rem; font-weight: 600; color: #ffffff; margin-bottom: 20px; font-family: 'Poppins', sans-serif; text-align: center;">
+        Seamless Healthcare Appointments
+      </h1>
+
+      <!-- Animated Tagline (Italics) -->
+      <p class="subtitle text-anim-3" style="font-size: 0.95rem; color: #b3b3b3; line-height: 1.7; max-width: 340px; margin: 0 auto 36px auto; font-family: 'Poppins', sans-serif; font-weight: 400; font-style: italic; text-align: center;">
+        "Trusted by busy professionals, consultants, and teams to save hours every week."
+      </p>
+      
+      <!-- Animated Buttons -->
+      <div class="text-anim-4" style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px; width: 100%;">
+        <a href="/src/pages/login-patient.html" class="btn-primary" style="display: block; width: 100%; box-sizing: border-box; font-family: 'Poppins', sans-serif; font-weight: 600;">
+          Patient Login
+        </a>
+        <a href="/src/pages/login-doctor.html" class="btn-primary btn-blue-neon" style="display: block; width: 100%; box-sizing: border-box; font-family: 'Poppins', sans-serif; font-weight: 600;">
+          Doctor Login
+        </a>
+      </div>
+      
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script type="module" src="/src/main.ts"></script>
+  <script type="module" src="/src/3d-bg.js"></script>
+</body>
+</html>

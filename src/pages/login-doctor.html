@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Doctor Login - One Click Schedule</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <!-- 3D Background Canvas -->
+  <canvas id="bg"></canvas>
+  
+  <div class="login-container">
+    <button class="btn-back" onclick="window.location.href='/'">← Back</button>
+
+    <div class="login-card animate-3d-card" style="border-color: rgba(92, 107, 192, 0.3);">
+      <div class="login-header">
+        <h2 class="login-title">Doctor Portal</h2>
+        <p class="login-subtitle">Access your clinic schedule and patients.</p>
+      </div>
+      
+      <form id="login-form">
+        <div class="input-group">
+          <label for="identifier">Email or Phone Number</label>
+          <input type="text" id="identifier" placeholder="doctor1@demo.com" required>
+        </div>
+
+        <div class="input-group">
+          <label for="password">Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="password" placeholder="••••••••" required>
+            <button type="button" id="toggle-password" class="toggle-password">
+              <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <a href="#" onclick="alert('Demo password: doc123')" class="forgot-link">Forgot Password?</a>
+        </div>
+
+        <button type="submit" class="btn-primary" id="login-btn" style="background: linear-gradient(135deg, #5C6BC0 0%, #3F51B5 100%); border: 1px solid rgba(124, 77, 255, 0.5); box-shadow: 0 4px 15px rgba(92, 107, 192, 0.3);">
+          Sign In
+        </button>
+      </form>
+
+      <p class="error" id="login-error" style="text-align: center; margin-top: 10px;"></p>
+      
+      <div class="login-footer">
+        <div class="demo-badge">Demo: doctor1@demo.com / doc123</div>
+      </div>
+    </div>
+  </div>
+  
+  <script type="module" src="./login-doctor.ts"></script>
+  <!-- Load the 3D background script -->
+  <script type="module" src="/src/3d-bg.js"></script>
+</body>
+</html>

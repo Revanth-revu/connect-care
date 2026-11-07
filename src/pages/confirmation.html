@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confirmed - One Click Schedule</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<!-- centered-page class added here -->
+<body class="dashboard-page centered-page">
+  <!-- 3D Background Canvas -->
+  <canvas id="bg"></canvas>
+  
+  <!-- dashboard-container restricts the width -->
+  <div class="dashboard-container" style="max-width: 480px; width: 100%;">
+    <!-- glass-panel adds the background blur and padding -->
+    <div class="glass-panel animate-3d-card" style="padding: 40px 32px; text-align: center;">
+      
+      <!-- Success Badge -->
+      <div class="success-badge">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right: 8px;">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        Appointment Confirmed
+      </div>
+
+      <!-- Details Container -->
+      <div id="details" class="details-container" style="text-align: left; margin-bottom: 32px; padding: 0 10px;">
+        <p style="color: #aaa; text-align: center;">Loading appointment details...</p>
+      </div>
+      
+      <p class="hint" style="margin-bottom: 24px; color: #aaa; font-size: 0.85rem; text-align: center;">
+        📱 SMS reminder will be sent to your phone. (Demo: simulated)
+      </p>
+      
+      <!-- Neon Button -->
+      <a href="./patient-dashboard.html" class="btn-neon-teal" style="display: block; width: 100%; text-decoration: none; box-sizing: border-box;">
+        Go to My Dashboard
+      </a>
+    </div>
+  </div>
+
+  <script type="module" src="./confirmation.ts"></script>
+  <script type="module" src="/src/3d-bg.js"></script>
+</body>
+</html>

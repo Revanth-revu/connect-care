@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Patient Portal - One Click Schedule</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body class="dashboard-page">
+  <!-- 3D Background Canvas -->
+  <canvas id="bg"></canvas>
+
+  <div class="dashboard-container">
+    
+    <!-- Top Navigation -->
+    <div class="top-nav">
+      <h2 class="page-title">Patient Portal</h2>
+      <button class="btn-neon-red" onclick="sessionStorage.clear(); window.location.href='/'" style="padding: 8px 16px; font-size: 0.8rem;">Logout</button>
+    </div>
+
+    <!-- Profile Panel -->
+    <div class="glass-panel">
+      <h3 style="color: #00BFA5; margin-top: 0; margin-bottom: 16px;" id="display-name">My Profile</h3>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <p style="font-size: 0.8rem; color: #888; margin: 0;">Phone</p>
+          <p style="color: #fff; margin: 0; font-weight: 500;">+91 <span id="display-phone"></span></p>
+        </div>
+        <div>
+          <p style="font-size: 0.8rem; color: #888; margin: 0;">Email</p>
+          <p style="color: #fff; margin: 0; font-weight: 500; overflow: hidden; text-overflow: ellipsis;" id="display-email"></p>
+        </div>
+        <div>
+          <p style="font-size: 0.8rem; color: #888; margin: 0;">Gender</p>
+          <p style="color: #fff; margin: 0; font-weight: 500;" id="display-gender"></p>
+        </div>
+      </div>
+      
+      <button class="btn-neon-teal" onclick="window.location.href='./doctors.html'" style="width: 100%; margin-top: 20px;">
+        + Book New Appointment
+      </button>
+    </div>
+
+    <h3 style="color: #fff; margin-bottom: 16px;">My Appointments</h3>
+    
+    <!-- Appointment List -->
+    <div id="appointments-list">
+      <p style="color: #aaa;">Loading appointments...</p>
+    </div>
+
+  </div>
+
+  <script type="module" src="./patient-dashboard.ts"></script>
+  <script type="module" src="/src/3d-bg.js"></script>
+</body>
+</html>
