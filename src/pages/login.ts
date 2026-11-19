@@ -36,20 +36,16 @@ verifyBtn.addEventListener('click', () => {
     return
   }
 
-  // Save both phone and role
-  sessionStorage.setItem('patient_phone', currentPhone)
   const role = roleSelect.value
-  
+
   if (role === 'doctor') {
-    // For the demo, we'll assume Dr. Vikram Sharma is logging in.
-    // In a real app, you would verify the doctor's phone number in the database.
-    sessionStorage.setItem('doctor_id', 'e23dc9de-0c45-4a57-a084-b1404eed7588') // We will get this real ID in Step 3
+    sessionStorage.setItem('doctor_id', 'e23dc9de-0c45-4a57-a084-b1404eed7588')
+    sessionStorage.setItem('doctor_name', 'Dr. Vikram Sharma')
     window.location.href = './doctor-dashboard.html'
   } else {
+    sessionStorage.setItem('patient_id', 'pat-1001-aarya')
+    sessionStorage.setItem('patient_phone', currentPhone)
+    sessionStorage.setItem('patient_name', 'CareConnect Patient')
     window.location.href = './patient-dashboard.html'
   }
 })
-const emailInput = document.getElementById('email') as HTMLInputElement;
-const email = emailInput.value.trim();
-// basic validation...
-sessionStorage.setItem('patient_email', email);

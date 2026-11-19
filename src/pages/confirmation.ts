@@ -1,50 +1,61 @@
 import { supabase } from '../supabase'
+import { escapeHtml } from './toast'
 
 const detailsEl = document.getElementById('details') as HTMLDivElement
 const appointmentId = sessionStorage.getItem('appointment_id')
 
 async function loadDetails() {
   if (!appointmentId) {
-    detailsEl.innerHTML = '<p style="color: #ef4444; text-align: center;">No appointment ID found. Please go back.</p>'
+    detailsEl.innerHTML = '<p style="color: #ef4444; text-align: center;">No appointment ID found. Please return to your dashboard.</p>'
     return
   }
 
   const { data, error } = await supabase
     .from('appointments')
-    .select('*, doctors(name, clinic_name, area)')
+    .select('*, doctors(name, clinic_name, area, specialty, consultation_fee)')
     .eq('id', appointmentId)
     .single()
 
   if (error || !data) {
-    detailsEl.innerHTML = `<p style="color: #ef4444; text-align: center;">Could not load details: ${error?.message}</p>`
+    detailsEl.innerHTML = `<p style="color: #ef4444; text-align: center;">Could not load details: ${escapeHtml(error?.message || 'Not found')}</p>`
     return
   }
 
-  const doctor = data.doctors as any
+  const doctor = (data.doctors as any) || {
+    name: 'Assigned Specialist',
+    clinic_name: 'CareConnect Clinic',
+    area: 'Bengaluru',
+    consultation_fee: 500,
+  }
+
   const localTime = new Date(data.appointment_time).toLocaleString('en-IN', {
     timeZone: 'Asia/Kolkata',
     dateStyle: 'medium',
-    timeStyle: 'short'
+    timeStyle: 'short',
   })
 
-  // Notice the explicit color: #ffffff for the values
+  let badgeColor = '#eab308'
+  if (data.status === 'Confirmed') badgeColor = '#4ade80'
+  if (data.status === 'Cancelled') badgeColor = '#888888'
+  if (data.status === 'Unpaid') badgeColor = '#ef4444'
+
   detailsEl.innerHTML = `
-    <div class="detail-row stagger-row" style="animation-delay: 0.5s;">
-      <span style="color: #888;">Doctor:</span>
-      <span style="color: #ffffff; font-weight: 600;">${doctor.name}</span>
+    <div class="detail-row stagger-row" style="animation-delay: 0.25s;">
+      <span style="color: #888;">Doctor</span>
+      <span style="color: #ffffff; font-weight: 600;">${escapeHtml(doctor.name)}</span>
     </div>
-    <div class="detail-row stagger-row" style="animation-delay: 0.6s;">
-      <span style="color: #888;">Clinic:</span>
-      <span style="color: #ffffff; font-weight: 500;">${doctor.clinic_name}, ${doctor.area}</span>
+    <div class="detail-row stagger-row" style="animation-delay: 0.35s;">
+      <span style="color: #888;">Clinic</span>
+      <span style="color: #ffffff; font-weight: 500;">${escapeHtml(doctor.clinic_name)}, ${escapeHtml(doctor.area)}</span>
     </div>
-    <div class="detail-row stagger-row" style="animation-delay: 0.7s;">
-      <span style="color: #888;">When:</span>
-      <span style="color: #ffffff; font-weight: 500;">${localTime} IST</span>
+    <div class="detail-row stagger-row" style="animation-delay: 0.45s;">
+      <span style="color: #888;">When</span>
+      <span style="color: #ffffff; font-weight: 500;">${escapeHtml(localTime)} IST</span>
     </div>
-    <div class="detail-row stagger-row" style="animation-delay: 0.8s;">
-      <span style="color: #888;">Status:</span>
-      <span class="status-badge" style="background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid #eab30840; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
-        ${data.status}
+    <div class="detail-row stagger-row" style="animation-delay: 0.55s;">
+      <span style="color: #888;">Status</span>
+      <span class="status-badge" style="background: ${badgeColor}20; color: ${badgeColor}; border: 1px solid ${badgeColor}45;">
+        ${escapeHtml(data.status)}
       </span>
     </div>
   `

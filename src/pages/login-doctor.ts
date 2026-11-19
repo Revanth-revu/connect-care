@@ -1,40 +1,51 @@
 import { supabase } from '../supabase'
+import { showToast } from './toast'
 
-// --- DOM Elements for Login ---
 const identifierInput = document.getElementById('identifier') as HTMLInputElement
 const passwordInput = document.getElementById('password') as HTMLInputElement
 const loginBtn = document.getElementById('login-btn') as HTMLButtonElement
 const errorMsg = document.getElementById('login-error') as HTMLParagraphElement
 const togglePasswordBtn = document.getElementById('toggle-password') as HTMLButtonElement
+const eyeIcon = document.getElementById('eye-icon') as unknown as SVGElement
 const loginForm = document.getElementById('login-form') as HTMLFormElement
+const forgotLink = document.getElementById('forgot-link') as HTMLAnchorElement
+const fillDemoBtn = document.getElementById('fill-demo-btn') as HTMLButtonElement
 
-// --- 1. Floating Label Logic ---
-const inputs = document.querySelectorAll<HTMLInputElement>('.input-group input')
-inputs.forEach(input => {
-  const parent = input.parentElement as HTMLDivElement
-  if (input.value !== '') parent.classList.add('active')
-  input.addEventListener('focus', () => parent.classList.add('active'))
-  input.addEventListener('blur', () => {
-    if (input.value === '') parent.classList.remove('active')
-  })
-})
+let isPasswordVisible = false
 
-// --- 2. Password Visibility Toggle ---
 togglePasswordBtn.addEventListener('click', () => {
-  if (passwordInput.type === 'password') {
-    passwordInput.type = 'text'
-    togglePasswordBtn.textContent = '🙈'
+  isPasswordVisible = !isPasswordVisible
+  passwordInput.type = isPasswordVisible ? 'text' : 'password'
+
+  if (isPasswordVisible) {
+    eyeIcon.innerHTML = `
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+      <line x1="1" y1="1" x2="23" y2="23"></line>
+    `
   } else {
-    passwordInput.type = 'password'
-    togglePasswordBtn.textContent = '👁️'
+    eyeIcon.innerHTML = `
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
+    `
   }
 })
 
-// --- 3. Login Form Submission ---
+forgotLink.addEventListener('click', (e) => {
+  e.preventDefault()
+  showToast('Demo password for doctor1@demo.com is "doc123"', 'info')
+})
+
+fillDemoBtn.addEventListener('click', () => {
+  identifierInput.value = 'doctor1@demo.com'
+  passwordInput.value = 'doc123'
+  errorMsg.textContent = ''
+  showToast('Demo doctor credentials filled', 'info')
+})
+
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault()
   errorMsg.textContent = ''
-  
+
   const identifier = identifierInput.value.trim()
   const password = passwordInput.value.trim()
 
@@ -46,7 +57,6 @@ loginForm.addEventListener('submit', async (e) => {
   loginBtn.disabled = true
   loginBtn.textContent = 'Authenticating...'
 
-  // Query the DOCTORS table instead of patients
   const { data, error } = await supabase
     .from('doctors')
     .select('*')
@@ -57,14 +67,18 @@ loginForm.addEventListener('submit', async (e) => {
   if (error || !data) {
     errorMsg.textContent = 'Invalid Doctor ID or Password.'
     loginBtn.disabled = false
-    loginBtn.textContent = 'Login as Doctor'
+    loginBtn.textContent = 'Sign In'
     return
   }
 
-  // Save doctor info to session storage
   sessionStorage.setItem('doctor_id', data.id)
-  sessionStorage.setItem('doctor_name', data.name)
-  
-  // Redirect to doctor dashboard
+  sessionStorage.setItem('doctor_name', data.name || 'Doctor')
+  sessionStorage.setItem('doctor_specialty', data.specialty || 'General Consultation')
+  sessionStorage.setItem('doctor_clinic', data.clinic_name || 'CareConnect Clinic')
+  sessionStorage.setItem('doctor_area', data.area || 'Bengaluru')
+  sessionStorage.setItem('doctor_education', data.education || 'MBBS')
+  sessionStorage.setItem('doctor_experience', data.experience || '')
+  sessionStorage.setItem('doctor_fee', String(data.consultation_fee || 500))
+
   window.location.href = './doctor-dashboard.html'
-})  
+})

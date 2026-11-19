@@ -3,57 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - CareConnect</title>
+  <title>Quick OTP Login - CareConnect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
-  <div class="page">
+  <canvas id="bg"></canvas>
+  <div class="login-container">
     <button class="btn-back" onclick="window.location.href='/'">← Back</button>
 
-    <!-- Step 1: Enter phone & Choose Role -->
-    <div class="card" id="step-phone">
-      <h2>Login to CareConnect</h2>
-      
-      <div class="field">
-        <label>I am a...</label>
+    <div class="login-card" id="step-phone">
+      <div class="login-header">
+        <h2 class="login-title">OTP Quick Login</h2>
+        <p class="login-subtitle">Sign in with your mobile number.</p>
+      </div>
+
+      <div class="input-group">
+        <label for="role-select">I am a...</label>
         <select id="role-select">
           <option value="patient">Patient</option>
           <option value="doctor">Doctor</option>
         </select>
       </div>
 
-      <div class="field">
-        <label>+91 Mobile Number</label>
+      <div class="input-group">
+        <label for="phone">+91 Mobile Number</label>
         <input type="tel" id="phone" placeholder="9876543210" maxlength="10" />
       </div>
-      
-      <button class="btn-primary" id="send-otp-btn" style="width:100%">
+
+      <button class="btn-primary" id="send-otp-btn">
         Send OTP
       </button>
-      
-      <p class="hint">We'll send a 6-digit code. (Demo: use 123456)</p>
-      <p class="error" id="phone-error"></p>
+
+      <p class="login-subtitle" style="margin-top: 14px; text-align: center; font-size: 0.8rem;">
+        We'll send a 6-digit code. (Demo: use 123456)
+      </p>
+      <p class="error" id="phone-error" style="text-align: center;"></p>
     </div>
 
-    <!-- Step 2: Enter OTP -->
-    <div class="card" id="step-otp" style="display:none">
-      <h2>Enter OTP</h2>
-      <p style="margin-bottom:16px;color:#aaa;font-size:0.9rem">
-        Sent to +91 <span id="phone-display"></span>
-      </p>
-      <div class="field">
-        <label>6-digit code</label>
+    <div class="login-card" id="step-otp" style="display:none">
+      <div class="login-header">
+        <h2 class="login-title">Enter OTP</h2>
+        <p class="login-subtitle">Sent to +91 <span id="phone-display"></span></p>
+      </div>
+
+      <div class="input-group">
+        <label for="otp">6-digit code</label>
         <input type="text" id="otp" placeholder="123456" maxlength="6" />
       </div>
-      
-      <button class="btn-primary" id="verify-btn" style="width:100%">
+
+      <button class="btn-primary" id="verify-btn">
         Verify & Continue
       </button>
-      
-      <p class="error" id="otp-error"></p>
+
+      <p class="error" id="otp-error" style="text-align: center;"></p>
     </div>
   </div>
-  
+
   <script type="module" src="./login.ts"></script>
+  <script type="module" src="/src/3d-bg.js"></script>
 </body>
 </html>

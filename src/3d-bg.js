@@ -1,14 +1,42 @@
-import * as THREE from 'three';
-
 const canvas = document.getElementById('bg');
 if (canvas) {
-  const scene = new THREE.Scene();
+  initThreeBackground(canvas);
+}
+
+async function initThreeBackground(canvas) {
+  const [
+    { Scene },
+    { PerspectiveCamera },
+    { WebGLRenderer },
+    { BufferGeometry },
+    { BufferAttribute, Float32BufferAttribute },
+    { PointsMaterial },
+    { LineBasicMaterial },
+    { Points },
+    { LineSegments },
+    { Group },
+    { AdditiveBlending },
+  ] = await Promise.all([
+    import('three/src/scenes/Scene.js'),
+    import('three/src/cameras/PerspectiveCamera.js'),
+    import('three/src/renderers/WebGLRenderer.js'),
+    import('three/src/core/BufferGeometry.js'),
+    import('three/src/core/BufferAttribute.js'),
+    import('three/src/materials/PointsMaterial.js'),
+    import('three/src/materials/LineBasicMaterial.js'),
+    import('three/src/objects/Points.js'),
+    import('three/src/objects/LineSegments.js'),
+    import('three/src/objects/Group.js'),
+    import('three/src/constants.js'),
+  ]);
+
+  const scene = new Scene();
   
   // 1. Camera & Renderer
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.z = 15;
 
-  const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  const renderer = new WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
@@ -17,11 +45,11 @@ if (canvas) {
   const radius = 8;
   
   // Geometry for the points
-  const geometry = new THREE.BufferGeometry();
+  const geometry = new BufferGeometry();
   const positions = new Float32Array(particleCount * 3);
   
   // Geometry for the lines connecting points
-  const lineGeometry = new THREE.BufferGeometry();
+  const lineGeometry = new BufferGeometry();
   const linePositions = [];
 
   // Generate points in a sphere shape
@@ -52,30 +80,30 @@ if (canvas) {
     }
   }
 
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+  geometry.setAttribute('position', new BufferAttribute(positions, 3));
+  lineGeometry.setAttribute('position', new Float32BufferAttribute(linePositions, 3));
 
   // 3. Materials
-  const particlesMaterial = new THREE.PointsMaterial({
+  const particlesMaterial = new PointsMaterial({
     size: 0.15,
     color: 0x00BFA5, // Neon Teal
     transparent: true,
     opacity: 0.9,
-    blending: THREE.AdditiveBlending
+    blending: AdditiveBlending
   });
 
-  const lineMaterial = new THREE.LineBasicMaterial({
+  const lineMaterial = new LineBasicMaterial({
     color: 0x00BFA5,
     transparent: true,
     opacity: 0.15
   });
 
   // 4. Meshes
-  const particlesMesh = new THREE.Points(geometry, particlesMaterial);
-  const linesMesh = new THREE.LineSegments(lineGeometry, lineMaterial);
+  const particlesMesh = new Points(geometry, particlesMaterial);
+  const linesMesh = new LineSegments(lineGeometry, lineMaterial);
   
   // Group them so they move together
-  const networkGroup = new THREE.Group();
+  const networkGroup = new Group();
   networkGroup.add(particlesMesh);
   networkGroup.add(linesMesh);
   scene.add(networkGroup);

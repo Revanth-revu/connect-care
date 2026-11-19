@@ -6,31 +6,35 @@
   <title>Checkout - One Click Schedule</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css" />
 </head>
 <body class="dashboard-page">
   <canvas id="bg"></canvas>
-  
-  <div class="dashboard-container" style="max-width: 480px;">
+
+  <div class="dashboard-container" style="max-width: 500px;">
+    <div class="top-nav">
+      <button class="btn-neon-ghost" onclick="window.location.href='./patient-dashboard.html'" style="padding: 8px 16px; font-size: 0.82rem;">
+        ← Dashboard
+      </button>
+    </div>
+
     <div class="glass-panel" style="padding: 32px;">
-      
       <div style="text-align: center; margin-bottom: 24px;">
-        <h2 style="font-size: 1.5rem; margin-bottom: 4px; color: #fff;">Secure Checkout</h2>
-        <p style="color: #aaa; font-size: 0.9rem;">Fee: <strong style="color: #00BFA5; font-size: 1.2rem;" id="fee-display">Loading...</strong></p>
+        <h2 style="font-size: 1.55rem; margin: 0 0 4px 0; color: #fff; font-family: 'Outfit', sans-serif;">Secure Checkout</h2>
+        <p style="color: #aaa; font-size: 0.9rem; margin: 0;">Consultation Fee: <strong style="color: #00BFA5; font-size: 1.25rem;" id="fee-display">₹500</strong></p>
       </div>
 
-      <div style="background: linear-gradient(135deg, rgba(0,137,123,0.2) 0%, rgba(0,191,165,0.1) 100%); border: 1px solid rgba(0,191,165,0.3); border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <div style="background: linear-gradient(135deg, rgba(0,137,123,0.2) 0%, rgba(0,191,165,0.08) 100%); border: 1px solid rgba(0,191,165,0.32); border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px;">
         <div style="display: flex; flex-direction: column;">
-          <span style="font-size: 0.8rem; color: #ccc;">Wallet Balance</span>
-          <span style="font-weight: 700; font-size: 1.2rem; color: #00BFA5;" id="wallet-balance">Loading...</span>
+          <span style="font-size: 0.78rem; color: #ccc;">CareConnect Wallet Balance</span>
+          <span style="font-weight: 700; font-size: 1.25rem; color: #00BFA5; font-family: 'Outfit', sans-serif;" id="wallet-balance">Loading...</span>
         </div>
-        <button type="button" onclick="addMoney()" class="btn-neon-teal" style="padding: 8px 12px; font-size: 0.8rem; border-radius: 8px;">
+        <button type="button" id="open-topup-btn" class="btn-neon-teal" style="padding: 8px 14px; font-size: 0.82rem;">
           + Add Money
         </button>
       </div>
 
-      <!-- Tabs -->
       <div class="payment-tabs-container">
         <button type="button" class="pay-tab active" data-target="wallet">Wallet</button>
         <button type="button" class="pay-tab" data-target="upi">UPI ID</button>
@@ -38,54 +42,70 @@
         <button type="button" class="pay-tab" data-target="card">Card</button>
       </div>
 
-      <!-- 1. WALLET TAB -->
       <div id="content-wallet" class="pay-content">
         <div class="input-group" style="margin-top: 20px;">
-          <label>Enter 4-Digit Transaction PIN</label>
+          <label for="wallet-pin">Enter 4-Digit Transaction PIN</label>
           <input type="password" id="wallet-pin" maxlength="4" placeholder="••••" style="letter-spacing: 5px; font-size: 1.2rem; text-align: center;" />
-          <p style="font-size: 0.75rem; color: #aaa; margin-top: 6px; text-align: center;">Demo PIN: 1234</p>
+          <p style="font-size: 0.76rem; color: #999; margin-top: 6px; text-align: center;">Demo PIN: 1234</p>
         </div>
       </div>
 
-      <!-- 2. UPI ID TAB -->
       <div id="content-upi" class="pay-content" style="display: none;">
         <div class="input-group" style="margin-top: 20px;">
-          <label>Enter your UPI ID (VPA)</label>
+          <label for="upi-input">Enter your UPI ID (VPA)</label>
           <input type="text" id="upi-input" placeholder="yourname@okicici" />
         </div>
       </div>
 
-      <!-- 3. QR CODE TAB -->
       <div id="content-qr" class="pay-content" style="display: none; text-align: center; margin-top: 20px;">
         <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 12px;">Scan with any UPI App</p>
         <div style="background: white; padding: 10px; border-radius: 16px; display: inline-block;">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=careconnect@okaxis&pn=CareConnect%20Clinic&am=500&cu=INR" alt="UPI QR Code" style="display: block; width: 160px; height: 160px;" />
+          <img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=careconnect@okaxis&pn=CareConnect%20Clinic&am=500&cu=INR" alt="UPI QR Code" style="display: block; width: 160px; height: 160px;" />
         </div>
       </div>
 
-      <!-- 4. CARD TAB -->
       <div id="content-card" class="pay-content" style="display: none; margin-top: 20px;">
         <div class="input-group">
-          <label>Card Number</label>
-          <input type="text" id="card-number" placeholder="XXXX XXXX XXXX XXXX" />
+          <label for="card-number">Card Number</label>
+          <input type="text" id="card-number" placeholder="4532 8910 2234 5678" maxlength="19" />
         </div>
         <div style="display: flex; gap: 12px;">
           <div class="input-group" style="flex: 1;">
-            <label>Expiry</label>
-            <input type="text" id="card-expiry" placeholder="MM/YY" />
+            <label for="card-expiry">Expiry</label>
+            <input type="text" id="card-expiry" placeholder="MM/YY" maxlength="5" />
           </div>
           <div class="input-group" style="flex: 1;">
-            <label>CVV</label>
+            <label for="card-cvv">CVV</label>
             <input type="password" id="card-cvv" placeholder="•••" maxlength="3" />
           </div>
         </div>
       </div>
 
-      <button type="button" class="btn-primary" id="pay-btn" onclick="window.processPayment()" style="width:100%; margin-top: 32px; font-size: 1.1rem;">
-        Pay
+      <button type="button" class="btn-primary" id="pay-btn" style="margin-top: 24px; font-size: 1.05rem;">
+        Pay Now
       </button>
-      
-      <p id="debug-log" style="text-align: center; margin-top: 16px; font-size: 0.8rem; color: #888;">Status: Ready</p>
+
+      <p id="pay-status" style="text-align: center; margin-top: 14px; font-size: 0.82rem; color: #888;"></p>
+    </div>
+  </div>
+
+  <!-- Add Money Modal -->
+  <div id="topup-modal" class="cc-modal-backdrop" style="display: none;">
+    <div class="cc-modal-card">
+      <div class="cc-modal-header">
+        <h3 class="cc-modal-title">Add Money to Wallet</h3>
+        <button type="button" id="close-topup-btn" class="cc-modal-close">×</button>
+      </div>
+      <div class="input-group">
+        <label for="topup-amount">Amount (₹)</label>
+        <input type="number" id="topup-amount" min="100" step="100" value="1000" placeholder="Enter amount" />
+      </div>
+      <div style="display: flex; gap: 8px; margin-bottom: 18px;">
+        <button type="button" class="cc-chip quick-amt" data-amt="500">+ ₹500</button>
+        <button type="button" class="cc-chip quick-amt" data-amt="1000">+ ₹1,000</button>
+        <button type="button" class="cc-chip quick-amt" data-amt="2500">+ ₹2,500</button>
+      </div>
+      <button type="button" id="confirm-topup-btn" class="btn-primary">Add to Balance</button>
     </div>
   </div>
 

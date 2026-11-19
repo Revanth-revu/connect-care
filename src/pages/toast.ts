@@ -1,4 +1,4 @@
-export function showToast(message: string, type: 'success' | 'error' = 'success') {
+export function showToast(message: string, type: 'success' | 'error' | 'info' = 'success') {
   let container = document.getElementById('toast-container')
   if (!container) {
     container = document.createElement('div')
@@ -8,14 +8,23 @@ export function showToast(message: string, type: 'success' | 'error' = 'success'
 
   const toast = document.createElement('div')
   toast.className = `toast ${type}`
-  toast.textContent = message
+
+  const icon = type === 'success' ? '✓' : type === 'error' ? '!' : 'i'
+  toast.innerHTML = `<span class="toast-icon">${icon}</span><span>${escapeHtml(message)}</span>`
 
   container.appendChild(toast)
 
-  // Remove after 3 seconds
   setTimeout(() => {
-    toast.style.opacity = '0'
-    toast.style.transition = 'opacity 0.3s'
+    toast.classList.add('toast-hide')
     setTimeout(() => toast.remove(), 300)
-  }, 3000)
+  }, 3400)
+}
+
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
 }
