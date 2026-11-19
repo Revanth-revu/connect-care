@@ -6,34 +6,230 @@
   <title>Doctor Portal - One Click Schedule</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css" />
 </head>
 <body class="dashboard-page">
-  <!-- 3D Background Canvas -->
   <canvas id="bg"></canvas>
 
-  <div class="dashboard-container">
-    
-    <!-- Top Navigation -->
-    <div class="top-nav">
-      <h2 class="page-title">Doctor Portal</h2>
-      <button class="btn-neon-red" onclick="sessionStorage.clear(); window.location.href='/'" style="padding: 8px 16px; font-size: 0.8rem;">Logout</button>
-    </div>
+  <div class="cc-shell">
+    <!-- Top Glass Command Bar -->
+    <header class="cc-topbar" style="border-color: rgba(124, 77, 255, 0.25);">
+      <div class="cc-brand-group">
+        <div class="cc-brand-icon indigo" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 64 64" fill="none">
+            <rect x="8" y="12" width="48" height="44" rx="8" stroke="#7C4DFF" stroke-width="4" fill="rgba(92, 107, 192, 0.22)"/>
+            <path d="M8 24H56" stroke="#7C4DFF" stroke-width="4"/>
+            <path d="M32 30V46M24 38H40" stroke="#00BFA5" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="cc-brand-title">
+            <span style="color: #fff;">Doctor</span> <span style="color: #a78bfa;">Command Center</span>
+          </h1>
+          <p class="cc-brand-sub" id="doctor-greeting">Loading physician profile...</p>
+        </div>
+      </div>
 
-    <!-- Welcome Panel -->
-    <div class="glass-panel" style="border-left: 4px solid #5C6BC0;">
-      <h3 style="color: #7C4DFF; margin-top: 0; margin-bottom: 8px;">Welcome, Doctor</h3>
-      <p style="color: #aaa; margin: 0; font-size: 0.9rem;">Manage your patient schedule and consultations below.</p>
-    </div>
+      <div class="cc-top-actions">
+        <div class="cc-clock-pill">
+          <span class="cc-pulse-dot indigo"></span>
+          <span id="live-clock">--:-- IST</span>
+        </div>
+        <button type="button" id="availability-toggle" class="btn-neon-teal" style="padding: 8px 14px; font-size: 0.82rem;">
+          ● Accepting Patients
+        </button>
+        <button type="button" id="logout-btn" class="btn-neon-red">
+          Logout
+        </button>
+      </div>
+    </header>
 
-    <h3 style="color: #fff; margin-bottom: 16px;">Upcoming Appointments</h3>
-    
-    <!-- Appointment List -->
-    <div id="doctor-appointments">
-      <p style="color: #aaa;">Loading schedule...</p>
-    </div>
+    <!-- KPI Stat Strip -->
+    <section class="cc-kpi-grid" aria-label="Doctor Practice Metrics">
+      <div class="cc-kpi-card" style="--accent: #eab308;">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-label">Awaiting Approval</span>
+          <span class="cc-kpi-icon" style="color: #eab308;">◷</span>
+        </div>
+        <div class="cc-kpi-value" id="kpi-pending">0</div>
+        <div class="cc-kpi-foot">
+          <span>Paid requests ready to accept</span>
+        </div>
+      </div>
 
+      <div class="cc-kpi-card" style="--accent: #4ade80;">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-label">Confirmed Queue</span>
+          <span class="cc-kpi-icon" style="color: #4ade80;">✓</span>
+        </div>
+        <div class="cc-kpi-value" id="kpi-confirmed">0</div>
+        <div class="cc-kpi-foot">
+          <span id="kpi-confirmed-sub">Upcoming consultations</span>
+        </div>
+      </div>
+
+      <div class="cc-kpi-card" style="--accent: #3b82f6;">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-label">Completed Visits</span>
+          <span class="cc-kpi-icon" style="color: #3b82f6;">🩺</span>
+        </div>
+        <div class="cc-kpi-value" id="kpi-completed">0</div>
+        <div class="cc-kpi-foot">
+          <span>Consultations concluded</span>
+        </div>
+      </div>
+
+      <div class="cc-kpi-card" style="--accent: #7C4DFF;">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-label">Clinic Revenue</span>
+          <span class="cc-kpi-icon" style="color: #a78bfa;">₹</span>
+        </div>
+        <div class="cc-kpi-value" id="kpi-revenue">₹0</div>
+        <div class="cc-kpi-foot">
+          <span id="kpi-fee-sub">Confirmed &amp; completed</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main 2-Column Bento Workspace -->
+    <main class="cc-bento-grid">
+      <!-- Left Sidebar Column -->
+      <aside class="cc-sidebar-col">
+        <!-- Physician Profile Card -->
+        <section class="cc-panel cc-spotlight indigo">
+          <div class="cc-profile-head">
+            <div class="cc-avatar indigo" id="doc-avatar">DR</div>
+            <div style="min-width: 0;">
+              <h2 id="doc-name" style="margin: 0; font-size: 1.12rem; color: #fff; font-family: 'Outfit', sans-serif;">Doctor</h2>
+              <p id="doc-specialty" style="margin: 2px 0 0 0; font-size: 0.84rem; color: #a78bfa; font-weight: 500;">Specialist</p>
+            </div>
+          </div>
+
+          <div class="cc-meta-grid">
+            <div class="cc-meta-item">
+              <label>Clinic</label>
+              <span id="doc-clinic">—</span>
+            </div>
+            <div class="cc-meta-item">
+              <label>Fee</label>
+              <span id="doc-fee" style="color: #00BFA5; font-weight: 600;">₹500</span>
+            </div>
+            <div class="cc-meta-item">
+              <label>Education</label>
+              <span id="doc-education">MBBS</span>
+            </div>
+            <div class="cc-meta-item">
+              <label>Area</label>
+              <span id="doc-area">Bengaluru</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08);">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #ccc;">
+              <span>Today's Slot Utilization</span>
+              <strong id="slot-util-text" style="color: #00BFA5;">0 / 8 slots</strong>
+            </div>
+            <div class="cc-progress-track">
+              <div class="cc-progress-fill" id="slot-util-bar" style="width: 0%;"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Today's Schedule Grid -->
+        <section class="cc-panel">
+          <div class="cc-panel-header" style="margin-bottom: 12px;">
+            <h2 class="cc-panel-title">Today's IST Slots</h2>
+            <span id="today-date-label" style="font-size: 0.76rem; color: #9ca3af;">Today</span>
+          </div>
+          <div id="today-timeline" class="cc-timeline"></div>
+        </section>
+      </aside>
+
+      <!-- Right Main Patient Queue -->
+      <section class="cc-main-col">
+        <div class="cc-panel">
+          <div class="cc-panel-header">
+            <h2 class="cc-panel-title">Patient Schedule &amp; Queue</h2>
+            <span id="queue-total-label" style="font-size: 0.8rem; color: #9ca3af;">0 total</span>
+          </div>
+
+          <div class="cc-toolbar">
+            <div class="cc-filter-tabs" id="doctor-filter-tabs">
+              <button type="button" class="cc-filter-tab indigo active" data-filter="All">All <span class="cc-tab-count" id="dcnt-all">0</span></button>
+              <button type="button" class="cc-filter-tab indigo" data-filter="Awaiting Doctor">Awaiting <span class="cc-tab-count" id="dcnt-awaiting">0</span></button>
+              <button type="button" class="cc-filter-tab indigo" data-filter="Confirmed">Confirmed <span class="cc-tab-count" id="dcnt-confirmed">0</span></button>
+              <button type="button" class="cc-filter-tab indigo" data-filter="Completed">Completed <span class="cc-tab-count" id="dcnt-completed">0</span></button>
+              <button type="button" class="cc-filter-tab indigo" data-filter="Cancelled">Cancelled <span class="cc-tab-count" id="dcnt-cancelled">0</span></button>
+            </div>
+
+            <div class="cc-search-wrap">
+              <span class="cc-search-icon">⌕</span>
+              <input id="doctor-search" type="text" class="cc-search-input" placeholder="Search patient, phone, reason..." />
+            </div>
+          </div>
+
+          <div id="doctor-appointments" class="cc-appt-list">
+            <p style="color: #aaa;">Loading schedule...</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Consultation Notes / Complete Visit Modal -->
+  <div id="notes-modal" class="cc-modal-backdrop" style="display: none;">
+    <div class="cc-modal-card">
+      <div class="cc-modal-header">
+        <h3 class="cc-modal-title" id="notes-modal-title">Complete Consultation</h3>
+        <button type="button" class="cc-modal-close" data-close-modal="notes-modal">×</button>
+      </div>
+      <p id="notes-patient-label" style="color: #aaa; font-size: 0.85rem; margin: 0 0 14px 0;"></p>
+      <div class="input-group">
+        <label for="consultation-notes">Clinical Notes / Prescription Summary (optional)</label>
+        <textarea id="consultation-notes" rows="4" placeholder="e.g., Continue prescribed medication for 5 days, hydrate well, review if symptoms persist."></textarea>
+      </div>
+      <button type="button" id="save-notes-btn" class="btn-primary">Save &amp; Mark Completed</button>
+    </div>
+  </div>
+
+  <!-- Teleconsultation Room Modal -->
+  <div id="teleconsult-modal" class="cc-modal-backdrop" style="display: none;">
+    <div class="cc-modal-card" style="max-width: 520px;">
+      <div class="cc-modal-header">
+        <h3 class="cc-modal-title">Teleconsultation Room</h3>
+        <button type="button" class="cc-modal-close" data-close-modal="teleconsult-modal">×</button>
+      </div>
+      <div style="background: linear-gradient(145deg, rgba(124,77,255,0.16), rgba(0,191,165,0.1)); border: 1px solid rgba(124,77,255,0.35); border-radius: 16px; padding: 28px 20px; text-align: center; margin-bottom: 18px;">
+        <div class="cc-avatar indigo" style="margin: 0 auto 12px; width: 64px; height: 64px; font-size: 1.4rem;">🎥</div>
+        <h4 id="tele-patient-name" style="margin: 0 0 4px 0; color: #fff; font-size: 1.1rem;">Patient Call Ready</h4>
+        <p id="tele-patient-meta" style="margin: 0 0 14px 0; font-size: 0.84rem; color: #ccc;"></p>
+        <span class="status-badge" style="background: rgba(74, 222, 128, 0.16); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.4);">
+          ● Encrypted HD Session Active
+        </span>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button type="button" id="tele-complete-btn" class="btn-neon-teal" style="flex: 1;">End &amp; Add Clinical Notes</button>
+        <button type="button" class="btn-neon-ghost" data-close-modal="teleconsult-modal">Minimize</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decline Confirmation Modal -->
+  <div id="decline-modal" class="cc-modal-backdrop" style="display: none;">
+    <div class="cc-modal-card">
+      <div class="cc-modal-header">
+        <h3 class="cc-modal-title">Decline Appointment?</h3>
+        <button type="button" class="cc-modal-close" data-close-modal="decline-modal">×</button>
+      </div>
+      <p style="color: #aaa; font-size: 0.9rem; margin: 0 0 22px 0;">
+        Are you sure you want to decline this request? The appointment will be marked as Cancelled.
+      </p>
+      <div style="display: flex; gap: 12px;">
+        <button type="button" class="btn-neon-ghost" style="flex: 1;" data-close-modal="decline-modal">Keep Request</button>
+        <button type="button" id="confirm-decline-btn" class="btn-neon-red" style="flex: 1;">Decline Request</button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="./doctor-dashboard.ts"></script>

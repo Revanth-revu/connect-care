@@ -1,26 +1,42 @@
 import { supabase } from '../supabase'
+import { showToast } from './toast'
 
-const debugLog = document.getElementById('debug-log') as HTMLParagraphElement
 const feeDisplay = document.getElementById('fee-display') as HTMLElement
 const walletBalanceText = document.getElementById('wallet-balance') as HTMLSpanElement
 const walletPinInput = document.getElementById('wallet-pin') as HTMLInputElement
+const upiInput = document.getElementById('upi-input') as HTMLInputElement
+const cardNumberInput = document.getElementById('card-number') as HTMLInputElement
+const cardExpiryInput = document.getElementById('card-expiry') as HTMLInputElement
+const cardCvvInput = document.getElementById('card-cvv') as HTMLInputElement
+const payBtn = document.getElementById('pay-btn') as HTMLButtonElement
+const payStatus = document.getElementById('pay-status') as HTMLParagraphElement
+const qrImg = document.getElementById('qr-img') as HTMLImageElement
+
+const topupModal = document.getElementById('topup-modal') as HTMLDivElement
+const openTopupBtn = document.getElementById('open-topup-btn') as HTMLButtonElement
+const closeTopupBtn = document.getElementById('close-topup-btn') as HTMLButtonElement
+const topupAmountInput = document.getElementById('topup-amount') as HTMLInputElement
+const confirmTopupBtn = document.getElementById('confirm-topup-btn') as HTMLButtonElement
 
 const appointmentId = sessionStorage.getItem('appointment_id')
 const patientPhone = sessionStorage.getItem('patient_phone')
 const doctorId = sessionStorage.getItem('doctor_id')
+
+if (!patientPhone) {
+  window.location.href = './login-patient.html'
+}
 
 let currentTab = 'wallet'
 let walletBalance = 5000
 let actualPin = '1234'
 let fee = 500
 
-// 1. Tab Switching Logic
-document.querySelectorAll('.pay-tab').forEach(tab => {
+document.querySelectorAll('.pay-tab').forEach((tab) => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.pay-tab').forEach(t => t.classList.remove('active'))
+    document.querySelectorAll('.pay-tab').forEach((t) => t.classList.remove('active'))
     tab.classList.add('active')
-    document.querySelectorAll('.pay-content').forEach(el => (el as HTMLDivElement).style.display = 'none')
-    
+    document.querySelectorAll('.pay-content').forEach((el) => ((el as HTMLDivElement).style.display = 'none'))
+
     const target = tab.getAttribute('data-target')
     if (target) {
       currentTab = target
@@ -30,92 +46,141 @@ document.querySelectorAll('.pay-tab').forEach(tab => {
   })
 })
 
-// 2. Load Data
 async function loadData() {
-  if (!patientPhone || !doctorId) {
-    debugLog.innerText = "Status: Missing session data (using fallback)"
-    return
-  }
-
   try {
-    const { data: doc } = await supabase.from('doctors').select('consultation_fee').eq('id', doctorId).single()
-    if (doc && doc.consultation_fee) {
-      fee = doc.consultation_fee
-      feeDisplay.textContent = `₹${fee}`
+    let resolvedDoctorId = doctorId
+
+    if (!resolvedDoctorId && appointmentId) {
+      const { data: appt } = await supabase
+        .from('appointments')
+        .select('doctor_id')
+        .eq('id', appointmentId)
+        .single()
+      if (appt?.doctor_id) resolvedDoctorId = appt.doctor_id
     }
 
-    const { data: pat } = await supabase.from('patients').select('wallet_balance, transaction_pin').eq('phone', patientPhone).single()
-    if (pat) {
-      walletBalance = pat.wallet_balance || 0
-      actualPin = pat.transaction_pin || '1234'
-      walletBalanceText.textContent = `₹${walletBalance}`
+    if (resolvedDoctorId) {
+      const { data: doc } = await supabase
+        .from('doctors')
+        .select('consultation_fee')
+        .eq('id', resolvedDoctorId)
+        .single()
+      if (doc && doc.consultation_fee) {
+        fee = doc.consultation_fee
+      }
     }
-    debugLog.innerText = "Status: Data Loaded"
-  } catch (err) {
-    debugLog.innerText = "Status: Error loading data"
+
+    feeDisplay.textContent = `₹${fee}`
+    payBtn.textContent = `Pay ₹${fee}`
+    if (qrImg) {
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(`upi://pay?pa=careconnect@okaxis&pn=CareConnect%20Clinic&am=${fee}&cu=INR`)}`
+    }
+
+    if (patientPhone) {
+      const { data: pat } = await supabase
+        .from('patients')
+        .select('wallet_balance, transaction_pin')
+        .eq('phone', patientPhone)
+        .single()
+      if (pat) {
+        walletBalance = pat.wallet_balance ?? 0
+        actualPin = pat.transaction_pin || '1234'
+      }
+    }
+    walletBalanceText.textContent = `₹${walletBalance.toLocaleString('en-IN')}`
+  } catch {
+    walletBalanceText.textContent = `₹${walletBalance.toLocaleString('en-IN')}`
   }
 }
+
 loadData()
 
-// 3. Add Money
-;(window as any).addMoney = async () => {
-  const amountStr = prompt("Enter amount to add:")
-  if (!amountStr) return
-  const amount = Number(amountStr)
-  if (isNaN(amount) || amount <= 0) return alert("Invalid amount")
+// Modal Top-up
+openTopupBtn.addEventListener('click', () => {
+  topupModal.style.display = 'flex'
+})
+closeTopupBtn.addEventListener('click', () => {
+  topupModal.style.display = 'none'
+})
+document.querySelectorAll('.quick-amt').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const amt = btn.getAttribute('data-amt')
+    if (amt) topupAmountInput.value = amt
+  })
+})
+
+confirmTopupBtn.addEventListener('click', async () => {
+  const amount = Number(topupAmountInput.value)
+  if (isNaN(amount) || amount <= 0) {
+    showToast('Please enter a valid positive amount.', 'error')
+    return
+  }
 
   walletBalance += amount
   if (patientPhone) {
     await supabase.from('patients').update({ wallet_balance: walletBalance }).eq('phone', patientPhone)
   }
-  walletBalanceText.textContent = `₹${walletBalance}`
-  alert("Money added!")
-}
+  walletBalanceText.textContent = `₹${walletBalance.toLocaleString('en-IN')}`
+  topupModal.style.display = 'none'
+  showToast(`Added ₹${amount.toLocaleString('en-IN')} to your CareConnect Wallet!`, 'success')
+})
 
-// 4. The Main Payment Function (Called directly from HTML)
-;(window as any).processPayment = async () => {
-  debugLog.innerText = "Status: Button clicked!"
-  
-  // Validate
+payBtn.addEventListener('click', async () => {
+  payStatus.textContent = ''
+
   if (currentTab === 'wallet') {
     if (walletBalance < fee) {
-      debugLog.innerText = "Status: Insufficient balance"
-      alert(`Insufficient Balance! You have ₹${walletBalance} but need ₹${fee}.`)
+      showToast(`Insufficient Balance (₹${walletBalance}). Need ₹${fee}.`, 'error')
       return
     }
-    if (walletPinInput.value !== actualPin) {
-      debugLog.innerText = "Status: Wrong PIN"
-      alert("Incorrect PIN! Enter 1234.")
+    if (walletPinInput.value.trim() !== actualPin) {
+      showToast('Incorrect Wallet PIN. Demo PIN is 1234.', 'error')
+      return
+    }
+  } else if (currentTab === 'upi') {
+    const upi = upiInput.value.trim()
+    if (!/^[\w.-]+@[\w.-]+$/.test(upi)) {
+      showToast('Enter a valid UPI ID (e.g., name@okicici).', 'error')
+      return
+    }
+  } else if (currentTab === 'card') {
+    const digits = cardNumberInput.value.replace(/\s+/g, '')
+    const exp = cardExpiryInput.value.trim()
+    const cvv = cardCvvInput.value.trim()
+    if (!/^\d{12,19}$/.test(digits) || !/^\d{2}\/\d{2}$/.test(exp) || !/^\d{3}$/.test(cvv)) {
+      showToast('Please enter valid Card Number, MM/YY Expiry, and 3-digit CVV.', 'error')
       return
     }
   }
 
-  debugLog.innerText = "Status: Processing..."
-  const btn = document.getElementById('pay-btn') as HTMLButtonElement
-  if (btn) btn.disabled = true
+  payBtn.disabled = true
+  payBtn.textContent = 'Processing Payment...'
+  payStatus.textContent = 'Verifying payment securely...'
 
   setTimeout(async () => {
     try {
-      // Deduct wallet
       if (currentTab === 'wallet' && patientPhone) {
         const newBal = walletBalance - fee
         await supabase.from('patients').update({ wallet_balance: newBal }).eq('phone', patientPhone)
       }
 
-      // Update appointment
       if (appointmentId) {
-        const { error } = await supabase.from('appointments').update({ status: 'Awaiting Doctor' }).eq('id', appointmentId)
-        if (error) throw new Error("DB Error: " + error.message)
+        const { error } = await supabase
+          .from('appointments')
+          .update({ status: 'Awaiting Doctor' })
+          .eq('id', appointmentId)
+        if (error) throw new Error(error.message)
       }
 
-      debugLog.innerText = "Status: Success!"
-      alert("Payment Successful!")
-      window.location.href = './confirmation.html'
-
+      showToast('Payment successful! Appointment sent to doctor.', 'success')
+      setTimeout(() => {
+        window.location.href = './confirmation.html'
+      }, 600)
     } catch (err: any) {
-      debugLog.innerText = "Status: Failed"
-      alert("Error: " + err.message)
-      if (btn) btn.disabled = false
+      payStatus.textContent = 'Payment failed.'
+      showToast(err.message || 'Payment error', 'error')
+      payBtn.disabled = false
+      payBtn.textContent = `Pay ₹${fee}`
     }
-  }, 1000)
-}
+  }, 800)
+})

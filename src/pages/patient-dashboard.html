@@ -6,52 +6,277 @@
   <title>Patient Portal - One Click Schedule</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css" />
 </head>
 <body class="dashboard-page">
-  <!-- 3D Background Canvas -->
   <canvas id="bg"></canvas>
 
-  <div class="dashboard-container">
-    
-    <!-- Top Navigation -->
-    <div class="top-nav">
-      <h2 class="page-title">Patient Portal</h2>
-      <button class="btn-neon-red" onclick="sessionStorage.clear(); window.location.href='/'" style="padding: 8px 16px; font-size: 0.8rem;">Logout</button>
-    </div>
-
-    <!-- Profile Panel -->
-    <div class="glass-panel">
-      <h3 style="color: #00BFA5; margin-top: 0; margin-bottom: 16px;" id="display-name">My Profile</h3>
-      
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <div>
-          <p style="font-size: 0.8rem; color: #888; margin: 0;">Phone</p>
-          <p style="color: #fff; margin: 0; font-weight: 500;">+91 <span id="display-phone"></span></p>
+  <div class="cc-shell">
+    <!-- Top Glass Command Bar -->
+    <header class="cc-topbar">
+      <div class="cc-brand-group">
+        <div class="cc-brand-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 64 64" fill="none">
+            <rect x="8" y="12" width="48" height="44" rx="8" stroke="#00BFA5" stroke-width="4" fill="rgba(0, 137, 123, 0.2)"/>
+            <path d="M8 24H56" stroke="#00BFA5" stroke-width="4"/>
+            <path d="M34 28L26 38H33L30 50L40 36H32L34 28Z" fill="#00BFA5"/>
+          </svg>
         </div>
         <div>
-          <p style="font-size: 0.8rem; color: #888; margin: 0;">Email</p>
-          <p style="color: #fff; margin: 0; font-weight: 500; overflow: hidden; text-overflow: ellipsis;" id="display-email"></p>
-        </div>
-        <div>
-          <p style="font-size: 0.8rem; color: #888; margin: 0;">Gender</p>
-          <p style="color: #fff; margin: 0; font-weight: 500;" id="display-gender"></p>
+          <h1 class="cc-brand-title">
+            <span style="color: #fff;">Patient</span> <span style="color: #00BFA5;">Command Center</span>
+          </h1>
+          <p class="cc-brand-sub" id="greeting-text">Welcome back to CareConnect</p>
         </div>
       </div>
-      
-      <button class="btn-neon-teal" onclick="window.location.href='./doctors.html'" style="width: 100%; margin-top: 20px;">
-        + Book New Appointment
-      </button>
-    </div>
 
-    <h3 style="color: #fff; margin-bottom: 16px;">My Appointments</h3>
-    
-    <!-- Appointment List -->
-    <div id="appointments-list">
-      <p style="color: #aaa;">Loading appointments...</p>
-    </div>
+      <div class="cc-top-actions">
+        <div class="cc-clock-pill">
+          <span class="cc-pulse-dot"></span>
+          <span id="live-clock">--:-- IST</span>
+        </div>
+        <button type="button" class="btn-neon-teal" onclick="window.location.href='./doctors.html'">
+          + Book Appointment
+        </button>
+        <button type="button" id="logout-btn" class="btn-neon-red">
+          Logout
+        </button>
+      </div>
+    </header>
 
+    <!-- KPI Stat Strip -->
+    <section class="cc-kpi-grid" aria-label="Patient Overview Metrics">
+      <div class="cc-kpi-card" style="--accent: #4ade80;">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-label">Confirmed Visits</span>
+          <span class="cc-kpi-icon" style="color: #4ade80;">✓</span>
+        </div>
+        <div class="cc-kpi-value" id="kpi-confirmed">0</div>
+        <div class="cc-kpi-foot">
+          <span id="kpi-confirmed-sub">No upcoming confirmed visits</span>
+        </div>
+      </div>
+
+      <div class="cc-kpi-card" style="--accent: #eab308;">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-label">Awaiting Doctor</span>
+          <span class="cc-kpi-icon" style="color: #eab308;">◷</span>
+        </div>
+        <div class="cc-kpi-value" id="kpi-awaiting">0</div>
+        <div class="cc-kpi-foot">
+          <span>Pending clinic confirmation</span>
+        </div>
+      </div>
+
+      <div class="cc-kpi-card" style="--accent: #00BFA5;">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-label">CareConnect Wallet</span>
+          <span class="cc-kpi-icon" style="color: #00BFA5;">₹</span>
+        </div>
+        <div class="cc-kpi-value" id="kpi-wallet">₹0</div>
+        <div class="cc-kpi-foot">
+          <span>Instant checkout balance</span>
+          <button type="button" id="kpi-topup-btn" class="footer-link" style="background: none; border: none; padding: 0; font-size: 0.78rem;">+ Add Money</button>
+        </div>
+      </div>
+
+      <div class="cc-kpi-card" style="--accent: #ef4444;">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-label">Unpaid Bookings</span>
+          <span class="cc-kpi-icon" style="color: #ef4444;">!</span>
+        </div>
+        <div class="cc-kpi-value" id="kpi-unpaid">0</div>
+        <div class="cc-kpi-foot">
+          <span id="kpi-unpaid-sub">All bookings settled</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main 2-Column Bento Workspace -->
+    <main class="cc-bento-grid">
+      <!-- Left Sidebar Column -->
+      <aside class="cc-sidebar-col">
+        <!-- Next Appointment Spotlight -->
+        <section class="cc-panel cc-spotlight" id="spotlight-panel">
+          <div class="cc-panel-header">
+            <h2 class="cc-panel-title">
+              <span style="color: #00BFA5;">✦</span> Next Up
+            </h2>
+            <span id="spotlight-badge" class="status-badge" style="display: none;"></span>
+          </div>
+          <div id="spotlight-body">
+            <p style="color: #9ca3af; font-size: 0.88rem; margin: 0;">Loading next appointment...</p>
+          </div>
+        </section>
+
+        <!-- Patient Profile Card -->
+        <section class="cc-panel">
+          <div class="cc-panel-header">
+            <h2 class="cc-panel-title">My Profile</h2>
+            <button type="button" id="open-profile-modal-btn" class="btn-neon-ghost" style="padding: 5px 12px; font-size: 0.76rem;">
+              Edit
+            </button>
+          </div>
+
+          <div class="cc-profile-head">
+            <div class="cc-avatar" id="profile-avatar">CC</div>
+            <div style="min-width: 0;">
+              <h3 id="display-name" style="margin: 0; font-size: 1.08rem; color: #fff; font-weight: 600;">My Profile</h3>
+              <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #00BFA5;">Verified CareConnect Patient</p>
+            </div>
+          </div>
+
+          <div class="cc-meta-grid">
+            <div class="cc-meta-item">
+              <label>Mobile</label>
+              <span>+91 <span id="display-phone">—</span></span>
+            </div>
+            <div class="cc-meta-item">
+              <label>Gender</label>
+              <span id="display-gender">—</span>
+            </div>
+            <div class="cc-meta-item" style="grid-column: span 2;">
+              <label>Email</label>
+              <span id="display-email">—</span>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 18px;">
+            <button type="button" id="profile-topup-btn" class="btn-neon-teal" style="flex: 1; font-size: 0.82rem; padding: 10px 12px;">
+              + Top Up Wallet
+            </button>
+            <button type="button" class="btn-neon-blue" onclick="window.location.href='./doctors.html'" style="flex: 1; font-size: 0.82rem; padding: 10px 12px;">
+              Find Doctors
+            </button>
+          </div>
+        </section>
+
+        <!-- Quick Specialties Launcher -->
+        <section class="cc-panel">
+          <div class="cc-panel-header" style="margin-bottom: 12px;">
+            <h2 class="cc-panel-title">Quick Specialty Book</h2>
+          </div>
+          <div class="cc-chip-wrap">
+            <button type="button" class="cc-chip" onclick="window.location.href='./doctors.html?specialty=Cardiology'">Cardiology</button>
+            <button type="button" class="cc-chip" onclick="window.location.href='./doctors.html?specialty=Dermatology'">Dermatology</button>
+            <button type="button" class="cc-chip" onclick="window.location.href='./doctors.html?specialty=General%20Medicine'">General Medicine</button>
+            <button type="button" class="cc-chip" onclick="window.location.href='./doctors.html?specialty=Pediatrics'">Pediatrics</button>
+            <button type="button" class="cc-chip" onclick="window.location.href='./doctors.html?specialty=Orthopedics'">Orthopedics</button>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Right Main Appointments Column -->
+      <section class="cc-main-col">
+        <div class="cc-panel">
+          <div class="cc-panel-header">
+            <h2 class="cc-panel-title">My Appointments</h2>
+            <span id="appt-total-label" style="font-size: 0.8rem; color: #9ca3af;">0 total</span>
+          </div>
+
+          <div class="cc-toolbar">
+            <div class="cc-filter-tabs" id="patient-filter-tabs">
+              <button type="button" class="cc-filter-tab active" data-filter="All">All <span class="cc-tab-count" id="cnt-all">0</span></button>
+              <button type="button" class="cc-filter-tab" data-filter="Upcoming">Upcoming <span class="cc-tab-count" id="cnt-upcoming">0</span></button>
+              <button type="button" class="cc-filter-tab" data-filter="Unpaid">Unpaid <span class="cc-tab-count" id="cnt-unpaid">0</span></button>
+              <button type="button" class="cc-filter-tab" data-filter="Completed">Completed <span class="cc-tab-count" id="cnt-completed">0</span></button>
+              <button type="button" class="cc-filter-tab" data-filter="Cancelled">Cancelled <span class="cc-tab-count" id="cnt-cancelled">0</span></button>
+            </div>
+
+            <div class="cc-search-wrap">
+              <span class="cc-search-icon">⌕</span>
+              <input id="patient-search" type="text" class="cc-search-input" placeholder="Search doctor, clinic, reason..." />
+            </div>
+          </div>
+
+          <div id="appointments-list" class="cc-appt-list">
+            <p style="color: #aaa;">Loading appointments...</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Add Money Modal -->
+  <div id="topup-modal" class="cc-modal-backdrop" style="display: none;">
+    <div class="cc-modal-card">
+      <div class="cc-modal-header">
+        <h3 class="cc-modal-title">Add Money to Wallet</h3>
+        <button type="button" class="cc-modal-close" data-close-modal="topup-modal">×</button>
+      </div>
+      <div class="input-group">
+        <label for="topup-amount">Amount (₹)</label>
+        <input type="number" id="topup-amount" min="100" step="100" value="1000" />
+      </div>
+      <div class="cc-chip-wrap" style="margin-bottom: 18px;">
+        <button type="button" class="cc-chip quick-topup-amt" data-amt="500">+ ₹500</button>
+        <button type="button" class="cc-chip quick-topup-amt" data-amt="1000">+ ₹1,000</button>
+        <button type="button" class="cc-chip quick-topup-amt" data-amt="2500">+ ₹2,500</button>
+      </div>
+      <button type="button" id="confirm-topup-btn" class="btn-primary">Add to Wallet</button>
+    </div>
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div id="profile-modal" class="cc-modal-backdrop" style="display: none;">
+    <div class="cc-modal-card">
+      <div class="cc-modal-header">
+        <h3 class="cc-modal-title">Edit Patient Profile</h3>
+        <button type="button" class="cc-modal-close" data-close-modal="profile-modal">×</button>
+      </div>
+      <form id="edit-profile-form">
+        <div class="input-group">
+          <label for="edit-name">Full Name</label>
+          <input type="text" id="edit-name" required />
+        </div>
+        <div class="input-group">
+          <label for="edit-email">Email Address</label>
+          <input type="email" id="edit-email" />
+        </div>
+        <div class="input-group">
+          <label for="edit-gender">Gender</label>
+          <select id="edit-gender">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+            <option value="Not specified">Prefer not to say</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Clinic Location Modal -->
+  <div id="map-modal" class="cc-modal-backdrop" style="display: none;">
+    <div class="cc-modal-card" style="max-width: 560px;">
+      <div class="cc-modal-header">
+        <h3 class="cc-modal-title" id="map-modal-title">Clinic Location</h3>
+        <button type="button" class="cc-modal-close" data-close-modal="map-modal">×</button>
+      </div>
+      <p id="map-modal-address" style="color: #ccc; font-size: 0.88rem; margin: 0 0 14px 0;"></p>
+      <div style="border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.12);">
+        <iframe id="map-modal-iframe" width="100%" height="260" style="border: 0; display: block;" loading="lazy"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cancel Confirmation Modal -->
+  <div id="cancel-modal" class="cc-modal-backdrop" style="display: none;">
+    <div class="cc-modal-card">
+      <div class="cc-modal-header">
+        <h3 class="cc-modal-title">Cancel Appointment?</h3>
+        <button type="button" class="cc-modal-close" data-close-modal="cancel-modal">×</button>
+      </div>
+      <p style="color: #aaa; font-size: 0.9rem; margin: 0 0 22px 0;">
+        Are you sure you want to cancel this appointment? This slot will be released for other patients.
+      </p>
+      <div style="display: flex; gap: 12px;">
+        <button type="button" class="btn-neon-ghost" style="flex: 1;" data-close-modal="cancel-modal">Keep Appointment</button>
+        <button type="button" id="confirm-cancel-btn" class="btn-neon-red" style="flex: 1;">Yes, Cancel</button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="./patient-dashboard.ts"></script>

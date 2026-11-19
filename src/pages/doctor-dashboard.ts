@@ -1,99 +1,428 @@
 import { supabase } from '../supabase'
+import { showToast, escapeHtml } from './toast'
 
 const listContainer = document.getElementById('doctor-appointments') as HTMLDivElement
-const doctorId = sessionStorage.getItem('doctor_id')
+const liveClockEl = document.getElementById('live-clock') as HTMLSpanElement
+const doctorGreetingEl = document.getElementById('doctor-greeting') as HTMLParagraphElement
+const availabilityToggle = document.getElementById('availability-toggle') as HTMLButtonElement
 
+const docAvatarEl = document.getElementById('doc-avatar') as HTMLDivElement
+const docNameEl = document.getElementById('doc-name') as HTMLHeadingElement
+const docSpecialtyEl = document.getElementById('doc-specialty') as HTMLParagraphElement
+const docClinicEl = document.getElementById('doc-clinic') as HTMLSpanElement
+const docFeeEl = document.getElementById('doc-fee') as HTMLSpanElement
+const docEducationEl = document.getElementById('doc-education') as HTMLSpanElement
+const docAreaEl = document.getElementById('doc-area') as HTMLSpanElement
+const slotUtilText = document.getElementById('slot-util-text') as HTMLElement
+const slotUtilBar = document.getElementById('slot-util-bar') as HTMLDivElement
+const todayTimelineEl = document.getElementById('today-timeline') as HTMLDivElement
+const todayDateLabelEl = document.getElementById('today-date-label') as HTMLSpanElement
+
+const kpiPending = document.getElementById('kpi-pending') as HTMLDivElement
+const kpiConfirmed = document.getElementById('kpi-confirmed') as HTMLDivElement
+const kpiConfirmedSub = document.getElementById('kpi-confirmed-sub') as HTMLSpanElement
+const kpiCompleted = document.getElementById('kpi-completed') as HTMLDivElement
+const kpiRevenue = document.getElementById('kpi-revenue') as HTMLDivElement
+const kpiFeeSub = document.getElementById('kpi-fee-sub') as HTMLSpanElement
+
+const queueTotalLabel = document.getElementById('queue-total-label') as HTMLSpanElement
+const searchInput = document.getElementById('doctor-search') as HTMLInputElement
+
+const dcntAll = document.getElementById('dcnt-all') as HTMLSpanElement
+const dcntAwaiting = document.getElementById('dcnt-awaiting') as HTMLSpanElement
+const dcntConfirmed = document.getElementById('dcnt-confirmed') as HTMLSpanElement
+const dcntCompleted = document.getElementById('dcnt-completed') as HTMLSpanElement
+const dcntCancelled = document.getElementById('dcnt-cancelled') as HTMLSpanElement
+
+const doctorId = sessionStorage.getItem('doctor_id')
 if (!doctorId) {
   window.location.href = './login-doctor.html'
 }
 
-async function loadDoctorSchedule() {
-  const { data, error } = await supabase
-    .from('appointments')
-    .select('*')
-    .eq('doctor_id', doctorId)
-    .order('appointment_time', { ascending: true })
+let doctorProfile = {
+  name: sessionStorage.getItem('doctor_name') || 'Doctor',
+  specialty: sessionStorage.getItem('doctor_specialty') || 'Specialist Consultation',
+  clinic_name: sessionStorage.getItem('doctor_clinic') || 'CareConnect Clinic',
+  area: sessionStorage.getItem('doctor_area') || 'Bengaluru',
+  education: sessionStorage.getItem('doctor_education') || 'MBBS, MD',
+  consultation_fee: Number(sessionStorage.getItem('doctor_fee') || '800'),
+}
 
-  if (error) {
-    listContainer.innerHTML = `<p class="error">Error: ${error.message}</p>`
-    return
+let isAccepting = true
+let currentFilter = 'All'
+let searchQuery = ''
+let appointmentsCache: any[] = []
+let patientsCache: any[] = []
+let activeNotesApptId: string | null = null
+let activeNotesMarkCompleted = true
+let activeTeleAppt: any = null
+let pendingDeclineId: string | null = null
+
+const SLOT_HOURS = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00']
+
+function updateClock() {
+  const now = new Date()
+  const istStr = now.toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  })
+  liveClockEl.textContent = `${istStr.toUpperCase()} IST`
+}
+updateClock()
+setInterval(updateClock, 30000)
+
+function openModal(id: string) {
+  const el = document.getElementById(id)
+  if (el) el.style.display = 'flex'
+}
+function closeModal(id: string) {
+  const el = document.getElementById(id)
+  if (el) el.style.display = 'none'
+}
+
+document.querySelectorAll('[data-close-modal]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const id = btn.getAttribute('data-close-modal')
+    if (id) closeModal(id)
+  })
+})
+
+document.getElementById('logout-btn')?.addEventListener('click', () => {
+  sessionStorage.clear()
+  window.location.href = '/'
+})
+
+availabilityToggle.addEventListener('click', () => {
+  isAccepting = !isAccepting
+  if (isAccepting) {
+    availabilityToggle.className = 'btn-neon-teal'
+    availabilityToggle.textContent = '● Accepting Patients'
+    showToast('Status set to Accepting Patients', 'success')
+  } else {
+    availabilityToggle.className = 'btn-neon-yellow'
+    availabilityToggle.textContent = '● In Consultation'
+    showToast('Status set to In Consultation', 'info')
+  }
+})
+
+function renderDoctorProfile() {
+  docNameEl.textContent = doctorProfile.name
+  docSpecialtyEl.textContent = doctorProfile.specialty
+  docClinicEl.textContent = doctorProfile.clinic_name
+  docFeeEl.textContent = `₹${doctorProfile.consultation_fee}`
+  docEducationEl.textContent = doctorProfile.education
+  docAreaEl.textContent = doctorProfile.area
+  doctorGreetingEl.textContent = `${doctorProfile.name} • ${doctorProfile.clinic_name}`
+  kpiFeeSub.textContent = `@ ₹${doctorProfile.consultation_fee} / consultation`
+
+  const cleanName = doctorProfile.name.replace(/^Dr\.\s*/i, '')
+  const initials = cleanName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0]?.toUpperCase() || '')
+    .join('')
+  docAvatarEl.textContent = initials || 'DR'
+}
+
+function getStatusColor(status: string): string {
+  if (status === 'Confirmed') return '#4ade80'
+  if (status === 'Awaiting Doctor') return '#eab308'
+  if (status === 'Completed') return '#3b82f6'
+  if (status === 'Cancelled') return '#888888'
+  return '#ef4444'
+}
+
+function renderTodayTimeline() {
+  const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
+  todayDateLabelEl.textContent = new Date().toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  })
+
+  const todayActive = appointmentsCache.filter((a) => {
+    if (a.status === 'Cancelled') return false
+    const d = new Date(a.appointment_time).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
+    return d === todayIST
+  })
+
+  const bookedCount = todayActive.length
+  const pct = Math.min(100, Math.round((bookedCount / SLOT_HOURS.length) * 100))
+  slotUtilText.textContent = `${bookedCount} / ${SLOT_HOURS.length} slots`
+  slotUtilBar.style.width = `${pct}%`
+
+  todayTimelineEl.innerHTML = ''
+  SLOT_HOURS.forEach((slot) => {
+    const match = todayActive.find((a) => {
+      const hm = new Date(a.appointment_time).toLocaleTimeString('en-GB', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      })
+      return hm === slot
+    })
+
+    const pill = document.createElement('div')
+    let cls = 'cc-slot-pill'
+    let label = 'Open'
+    if (match) {
+      if (match.status === 'Awaiting Doctor') {
+        cls += ' pending'
+        label = 'Pending'
+      } else {
+        cls += ' booked'
+        label = match.status === 'Completed' ? 'Done' : 'Booked'
+      }
+    }
+    pill.className = cls
+    pill.innerHTML = `<span>${slot}</span><strong>${label}</strong>`
+    todayTimelineEl.appendChild(pill)
+  })
+}
+
+function renderKpis() {
+  const pending = appointmentsCache.filter((a) => a.status === 'Awaiting Doctor')
+  const confirmed = appointmentsCache.filter((a) => a.status === 'Confirmed')
+  const completed = appointmentsCache.filter((a) => a.status === 'Completed')
+  const cancelled = appointmentsCache.filter((a) => a.status === 'Cancelled')
+
+  kpiPending.textContent = String(pending.length)
+  kpiConfirmed.textContent = String(confirmed.length)
+  kpiCompleted.textContent = String(completed.length)
+
+  const totalRevenue = (confirmed.length + completed.length) * doctorProfile.consultation_fee
+  kpiRevenue.textContent = `₹${totalRevenue.toLocaleString('en-IN')}`
+
+  if (confirmed.length > 0) {
+    const nextConf = confirmed[0]
+    const formatted = new Date(nextConf.appointment_time).toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    })
+    kpiConfirmedSub.textContent = `Next: ${formatted}`
+  } else {
+    kpiConfirmedSub.textContent = 'No confirmed visits queued'
   }
 
-  if (data.length === 0) {
-    listContainer.innerHTML = `<div class="glass-panel"><p style="color:#aaa; text-align:center;">No appointments scheduled yet.</p></div>`
-    return
-  }
+  dcntAll.textContent = String(appointmentsCache.length)
+  dcntAwaiting.textContent = String(pending.length)
+  dcntConfirmed.textContent = String(confirmed.length)
+  dcntCompleted.textContent = String(completed.length)
+  dcntCancelled.textContent = String(cancelled.length)
+  queueTotalLabel.textContent = `${appointmentsCache.length} total`
+}
 
-  // Fetch patients to match their phone number to their gender
-  const { data: patientsData } = await supabase.from('patients').select('phone, gender')
+function renderQueue() {
+  const filtered = appointmentsCache.filter((appt) => {
+    const matchesTab = currentFilter === 'All' || appt.status === currentFilter
+    if (!matchesTab) return false
+    if (!searchQuery) return true
+
+    const pat = patientsCache.find((p) => p.phone === appt.patient_phone)
+    const haystack = [
+      pat?.name || '',
+      appt.patient_phone || '',
+      appt.patient_email || '',
+      appt.reason || '',
+      appt.status || '',
+    ]
+      .join(' ')
+      .toLowerCase()
+
+    return haystack.includes(searchQuery)
+  })
 
   listContainer.innerHTML = ''
-  
-  data.forEach((appt) => {
+
+  if (filtered.length === 0) {
+    listContainer.innerHTML = `
+      <div style="text-align: center; padding: 36px 20px; border: 1px dashed rgba(255,255,255,0.12); border-radius: 16px;">
+        <p style="color: #9ca3af; margin: 0;">No appointments in this category.</p>
+      </div>
+    `
+    return
+  }
+
+  filtered.forEach((appt) => {
+    const pat = patientsCache.find((p) => p.phone === appt.patient_phone)
+    const patientName = pat?.name || `Patient (+91 ${appt.patient_phone})`
+    const patientGender = pat?.gender || 'Not specified'
+    const badgeColor = getStatusColor(appt.status)
+
     const localTime = new Date(appt.appointment_time).toLocaleString('en-IN', {
       timeZone: 'Asia/Kolkata',
       dateStyle: 'medium',
-      timeStyle: 'short'
+      timeStyle: 'short',
     })
 
-    const patientRecord = patientsData?.find(p => p.phone === appt.patient_phone)
-    const patientGender = patientRecord ? patientRecord.gender : 'Unknown'
-
-    // Badge Colors
-    let badgeColor = '#ef4444' // Unpaid (Red)
-    if (appt.status === 'Awaiting Doctor') badgeColor = '#eab308' // Yellow
-    if (appt.status === 'Confirmed') badgeColor = '#4ade80' // Green
-    if (appt.status === 'Completed') badgeColor = '#3b82f6' // Blue
-    if (appt.status === 'Cancelled') badgeColor = '#888' // Gray
-
     let actionButtons = ''
-    
-    // Doctor can only accept if payment is done (Awaiting Doctor)
     if (appt.status === 'Awaiting Doctor') {
       actionButtons = `
-        <button onclick="updateStatus('${appt.id}', 'Confirmed')" class="btn-neon-teal" style="width: 100%;">
-          Accept Appointment
+        <button type="button" class="btn-neon-teal" data-accept-id="${escapeHtml(appt.id)}">
+          ✓ Accept Appointment
+        </button>
+        <button type="button" class="btn-neon-red" data-decline-id="${escapeHtml(appt.id)}">
+          Decline
         </button>
       `
     } else if (appt.status === 'Confirmed') {
       actionButtons = `
-        <div style="display: flex; gap: 10px; margin-top: 12px;">
-          <button onclick="updateStatus('${appt.id}', 'Completed')" class="btn-neon-blue" style="flex: 1;">
-            Mark Completed
-          </button>
-          <button onclick="window.open('https://meet.google.com/new', '_blank')" class="btn-neon-teal" style="flex: 1;">
-            🎥 Join Video Call
-          </button>
-        </div>
+        <button type="button" class="btn-neon-teal" data-tele-id="${escapeHtml(appt.id)}">
+          🎥 Join Teleconsult
+        </button>
+        <button type="button" class="btn-neon-blue" data-complete-id="${escapeHtml(appt.id)}">
+          ✓ Mark Completed
+        </button>
+      `
+    } else if (appt.status === 'Completed') {
+      actionButtons = `
+        <button type="button" class="btn-neon-ghost" data-editnotes-id="${escapeHtml(appt.id)}">
+          ✎ ${appt.notes ? 'Edit Clinical Notes' : 'Add Clinical Notes'}
+        </button>
       `
     }
 
     const card = document.createElement('div')
-    card.className = 'appointment-card'
-    
+    card.className = 'cc-appt-card indigo'
     card.innerHTML = `
-      <div class="appointment-header">
+      <div class="cc-appt-top">
         <div>
-          <h3>Patient: +91 ${appt.patient_phone}</h3>
-          <p>Gender: ${patientGender}</p>
-          <p>Email: ${appt.patient_email || 'Not provided'}</p>
-          <p>Reason: ${appt.reason || 'Not specified'}</p>
-          <p style="color:#fff; font-weight:500; margin-top:8px;">📅 ${localTime} IST</p>
+          <h3 class="cc-appt-title">
+            <span>${escapeHtml(patientName)}</span>
+            <span style="font-size: 0.72rem; font-weight: 500; padding: 2px 9px; border-radius: 99px; background: rgba(124, 77, 255, 0.16); color: #c4b5fd; border: 1px solid rgba(124, 77, 255, 0.35);">
+              ${escapeHtml(patientGender)}
+            </span>
+          </h3>
+          <p class="cc-appt-sub">+91 ${escapeHtml(appt.patient_phone || '')} • ${escapeHtml(appt.patient_email || 'No email')}</p>
         </div>
-        <span class="status-badge" style="background: ${badgeColor}20; color: ${badgeColor}; border: 1px solid ${badgeColor}40;">
-          ${appt.status}
+        <span class="status-badge" style="background: ${badgeColor}20; color: ${badgeColor}; border: 1px solid ${badgeColor}45;">
+          ${escapeHtml(appt.status)}
         </span>
       </div>
-      <div style="margin-top: 16px;">
-         ${actionButtons}
+
+      <div class="cc-appt-meta">
+        <span>📅 <strong>${escapeHtml(localTime)} IST</strong></span>
+        <span>🩺 Reason: <strong>${escapeHtml(appt.reason || 'General Consultation')}</strong></span>
       </div>
+
+      ${appt.notes ? `<div class="cc-appt-notes"><strong>Clinical Notes:</strong> ${escapeHtml(appt.notes)}</div>` : ''}
+      ${actionButtons ? `<div class="cc-appt-actions">${actionButtons}</div>` : ''}
     `
     listContainer.appendChild(card)
   })
+
+  attachQueueHandlers()
 }
 
-// Global function to update status
-(window as any).updateStatus = async (id: string, newStatus: string) => {
+function attachQueueHandlers() {
+  listContainer.querySelectorAll('[data-accept-id]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-accept-id')
+      if (id) updateStatus(id, 'Confirmed')
+    })
+  })
+
+  listContainer.querySelectorAll('[data-decline-id]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      pendingDeclineId = btn.getAttribute('data-decline-id')
+      openModal('decline-modal')
+    })
+  })
+
+  listContainer.querySelectorAll('[data-complete-id]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-complete-id')
+      if (id) openNotesModal(id, true)
+    })
+  })
+
+  listContainer.querySelectorAll('[data-editnotes-id]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-editnotes-id')
+      if (id) openNotesModal(id, false)
+    })
+  })
+
+  listContainer.querySelectorAll('[data-tele-id]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-tele-id')
+      const appt = appointmentsCache.find((a) => a.id === id)
+      if (!appt) return
+      activeTeleAppt = appt
+      const pat = patientsCache.find((p) => p.phone === appt.patient_phone)
+      ;(document.getElementById('tele-patient-name') as HTMLElement).textContent = pat?.name || `+91 ${appt.patient_phone}`
+      ;(document.getElementById('tele-patient-meta') as HTMLElement).textContent =
+        `${appt.reason || 'General Consultation'} • +91 ${appt.patient_phone}`
+      openModal('teleconsult-modal')
+    })
+  })
+}
+
+function openNotesModal(apptId: string, markCompleted: boolean) {
+  const appt = appointmentsCache.find((a) => a.id === apptId)
+  if (!appt) return
+  activeNotesApptId = apptId
+  activeNotesMarkCompleted = markCompleted
+  const pat = patientsCache.find((p) => p.phone === appt.patient_phone)
+
+  ;(document.getElementById('notes-modal-title') as HTMLElement).textContent = markCompleted
+    ? 'Complete Consultation'
+    : 'Edit Clinical Notes'
+  ;(document.getElementById('notes-patient-label') as HTMLElement).textContent =
+    `Patient: ${pat?.name || '+91 ' + appt.patient_phone} • ${appt.reason || 'Consultation'}`
+  ;(document.getElementById('consultation-notes') as HTMLTextAreaElement).value = appt.notes || ''
+  ;(document.getElementById('save-notes-btn') as HTMLButtonElement).textContent = markCompleted
+    ? 'Save & Mark Completed'
+    : 'Save Notes'
+
+  openModal('notes-modal')
+}
+
+document.getElementById('save-notes-btn')?.addEventListener('click', async () => {
+  if (!activeNotesApptId) return
+  const notes = (document.getElementById('consultation-notes') as HTMLTextAreaElement).value.trim()
+  const updates: Record<string, any> = { notes }
+  if (activeNotesMarkCompleted) updates.status = 'Completed'
+
+  const { error } = await supabase
+    .from('appointments')
+    .update(updates)
+    .eq('id', activeNotesApptId)
+    .select()
+
+  closeModal('notes-modal')
+  activeNotesApptId = null
+
+  if (error) {
+    showToast(`Failed to save: ${error.message}`, 'error')
+  } else {
+    showToast(activeNotesMarkCompleted ? 'Consultation marked as Completed!' : 'Clinical notes updated!', 'success')
+    loadDoctorSchedule()
+  }
+})
+
+document.getElementById('tele-complete-btn')?.addEventListener('click', () => {
+  if (!activeTeleAppt) return
+  const id = activeTeleAppt.id
+  closeModal('teleconsult-modal')
+  openNotesModal(id, true)
+})
+
+document.getElementById('confirm-decline-btn')?.addEventListener('click', async () => {
+  if (!pendingDeclineId) return
+  const id = pendingDeclineId
+  pendingDeclineId = null
+  closeModal('decline-modal')
+  await updateStatus(id, 'Cancelled')
+})
+
+async function updateStatus(id: string, newStatus: string) {
   const { data, error } = await supabase
     .from('appointments')
     .update({ status: newStatus })
@@ -101,12 +430,63 @@ async function loadDoctorSchedule() {
     .select()
 
   if (error) {
-    alert("Error updating status: " + error.message)
+    showToast(`Error updating status: ${error.message}`, 'error')
   } else if (data && data.length === 0) {
-    alert("Failed to update. Database permissions might be missing.")
+    showToast('Failed to update. Database permissions might be missing.', 'error')
   } else {
-    loadDoctorSchedule() // Refresh the list
+    showToast(`Appointment ${newStatus.toLowerCase()}!`, newStatus === 'Cancelled' ? 'info' : 'success')
+    loadDoctorSchedule()
   }
+}
+
+document.querySelectorAll('#doctor-filter-tabs .cc-filter-tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('#doctor-filter-tabs .cc-filter-tab').forEach((t) => t.classList.remove('active'))
+    tab.classList.add('active')
+    currentFilter = tab.getAttribute('data-filter') || 'All'
+    renderQueue()
+  })
+})
+
+searchInput.addEventListener('input', () => {
+  searchQuery = searchInput.value.trim().toLowerCase()
+  renderQueue()
+})
+
+async function loadDoctorSchedule() {
+  const [{ data: appts, error }, { data: patients }, { data: docRecord }] = await Promise.all([
+    supabase
+      .from('appointments')
+      .select('*')
+      .eq('doctor_id', doctorId)
+      .order('appointment_time', { ascending: true }),
+    supabase.from('patients').select('phone, gender, name'),
+    supabase.from('doctors').select('*').eq('id', doctorId).single(),
+  ])
+
+  if (error) {
+    listContainer.innerHTML = `<p class="error">Error: ${escapeHtml(error.message)}</p>`
+    return
+  }
+
+  if (docRecord) {
+    doctorProfile = {
+      name: docRecord.name || doctorProfile.name,
+      specialty: docRecord.specialty || doctorProfile.specialty,
+      clinic_name: docRecord.clinic_name || doctorProfile.clinic_name,
+      area: docRecord.area || doctorProfile.area,
+      education: docRecord.education || doctorProfile.education,
+      consultation_fee: Number(docRecord.consultation_fee || doctorProfile.consultation_fee),
+    }
+  }
+
+  renderDoctorProfile()
+  appointmentsCache = appts || []
+  patientsCache = patients || []
+
+  renderKpis()
+  renderTodayTimeline()
+  renderQueue()
 }
 
 loadDoctorSchedule()
