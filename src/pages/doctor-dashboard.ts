@@ -386,25 +386,39 @@ function openNotesModal(apptId: string, markCompleted: boolean) {
 
 document.getElementById('save-notes-btn')?.addEventListener('click', async () => {
   if (!activeNotesApptId) return
+  const targetId = activeNotesApptId
   const notes = (document.getElementById('consultation-notes') as HTMLTextAreaElement).value.trim()
-  const updates: Record<string, any> = { notes }
-  if (activeNotesMarkCompleted) updates.status = 'Completed'
 
-  const { error } = await supabase
-    .from('appointments')
-    .update(updates)
-    .eq('id', activeNotesApptId)
-    .select()
+  if (activeNotesMarkCompleted) {
+    const { error: statusErr } = await supabase
+      .from('appointments')
+      .update({ status: 'Completed' })
+      .eq('id', targetId)
+      .select()
+
+    if (statusErr) {
+      showToast(`Failed to complete appointment: ${statusErr.message}`, 'error')
+      return
+    }
+  }
+
+  if (notes || !activeNotesMarkCompleted) {
+    const { error: notesErr } = await supabase
+      .from('appointments')
+      .update({ notes })
+      .eq('id', targetId)
+      .select()
+
+    if (notesErr && !activeNotesMarkCompleted) {
+      showToast(`Note could not be saved to database: ${notesErr.message}`, 'error')
+      return
+    }
+  }
 
   closeModal('notes-modal')
   activeNotesApptId = null
-
-  if (error) {
-    showToast(`Failed to save: ${error.message}`, 'error')
-  } else {
-    showToast(activeNotesMarkCompleted ? 'Consultation marked as Completed!' : 'Clinical notes updated!', 'success')
-    loadDoctorSchedule()
-  }
+  showToast(activeNotesMarkCompleted ? 'Consultation marked as Completed!' : 'Clinical notes updated!', 'success')
+  loadDoctorSchedule()
 })
 
 document.getElementById('tele-complete-btn')?.addEventListener('click', () => {
