@@ -41,20 +41,20 @@ async function loadDetails() {
 
   detailsEl.innerHTML = `
     <div class="detail-row stagger-row" style="animation-delay: 0.25s;">
-      <span style="color: #888;">Doctor</span>
+      <span style="color: #cbd5e1; font-weight: 500;">Doctor</span>
       <span style="color: #ffffff; font-weight: 600;">${escapeHtml(doctor.name)}</span>
     </div>
     <div class="detail-row stagger-row" style="animation-delay: 0.35s;">
-      <span style="color: #888;">Clinic</span>
+      <span style="color: #cbd5e1; font-weight: 500;">Clinic</span>
       <span style="color: #ffffff; font-weight: 500;">${escapeHtml(doctor.clinic_name)}, ${escapeHtml(doctor.area)}</span>
     </div>
     <div class="detail-row stagger-row" style="animation-delay: 0.45s;">
-      <span style="color: #888;">When</span>
+      <span style="color: #cbd5e1; font-weight: 500;">When</span>
       <span style="color: #ffffff; font-weight: 500;">${escapeHtml(localTime)} IST</span>
     </div>
     <div class="detail-row stagger-row" style="animation-delay: 0.55s;">
-      <span style="color: #888;">Status</span>
-      <span class="status-badge" style="background: ${badgeColor}20; color: ${badgeColor}; border: 1px solid ${badgeColor}45;">
+      <span style="color: #cbd5e1; font-weight: 500;">Status</span>
+      <span class="status-badge" style="background: ${badgeColor}28; color: ${badgeColor}; border: 1px solid ${badgeColor}65;">
         ${escapeHtml(data.status)}
       </span>
     </div>

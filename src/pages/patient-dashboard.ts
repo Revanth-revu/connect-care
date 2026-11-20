@@ -264,7 +264,7 @@ function renderKpisAndSpotlight() {
   if (!nextAppt) {
     spotlightBadge.style.display = 'none'
     spotlightBody.innerHTML = `
-      <p style="color: #9ca3af; font-size: 0.88rem; margin: 0 0 14px 0;">
+      <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0 0 14px 0;">
         You have no active upcoming appointments.
       </p>
       <button type="button" class="btn-neon-teal" style="width: 100%;" onclick="window.location.href='./doctors.html'">
@@ -300,15 +300,15 @@ function renderKpisAndSpotlight() {
 
   spotlightBody.innerHTML = `
     <div style="margin-bottom: 12px;">
-      <span style="display: inline-block; font-size: 0.72rem; color: #00BFA5; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px;">
+      <span style="display: inline-block; font-size: 0.74rem; color: #2dd4bf; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px;">
         ${escapeHtml(relLabel)} · ${escapeHtml(formatted)} IST
       </span>
       <h3 style="margin: 0; font-size: 1.12rem; color: #fff;">${escapeHtml(doc?.name || 'Specialist Doctor')}</h3>
-      <p style="margin: 3px 0 0 0; font-size: 0.84rem; color: #b3b3b3;">
+      <p style="margin: 3px 0 0 0; font-size: 0.86rem; color: #e2e8f0;">
         ${escapeHtml(doc?.specialty || 'Consultation')} • ${escapeHtml(doc?.clinic_name || 'CareConnect Clinic')}
       </p>
     </div>
-    ${nextAppt.reason ? `<p style="font-size: 0.8rem; color: #9ca3af; margin: 0 0 14px 0;">Reason: ${escapeHtml(nextAppt.reason)}</p>` : ''}
+    ${nextAppt.reason ? `<p style="font-size: 0.84rem; color: #cbd5e1; margin: 0 0 14px 0;">Reason: ${escapeHtml(nextAppt.reason)}</p>` : ''}
     ${ctaHtml}
   `
 
@@ -344,8 +344,8 @@ function renderAppointments() {
 
   if (filtered.length === 0) {
     listContainer.innerHTML = `
-      <div style="text-align: center; padding: 36px 20px; border: 1px dashed rgba(255,255,255,0.12); border-radius: 16px;">
-        <p style="color: #9ca3af; margin: 0 0 14px 0;">No appointments match this view.</p>
+      <div style="text-align: center; padding: 36px 20px; border: 1px dashed rgba(148,163,184,0.28); border-radius: 16px;">
+        <p style="color: #cbd5e1; margin: 0 0 14px 0;">No appointments match this view.</p>
         <button type="button" class="btn-neon-teal" onclick="window.location.href='./doctors.html'">+ Book an Appointment</button>
       </div>
     `

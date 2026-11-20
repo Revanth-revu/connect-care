@@ -2,6 +2,9 @@ import { supabase } from '../supabase'
 
 const doctorNameEl = document.getElementById('doctor-name')
 const doctorDetailsEl = document.getElementById('doctor-details')
+const doctorAvailabilityPill = document.getElementById('doctor-availability-pill') as HTMLDivElement
+const doctorAvailabilityText = document.getElementById('doctor-availability-text') as HTMLSpanElement
+const unavailableBanner = document.getElementById('unavailable-banner') as HTMLDivElement
 const feeBadgeEl = document.getElementById('fee-badge') as HTMLSpanElement
 const clinicAddressEl = document.getElementById('clinic-address-text') as HTMLParagraphElement
 const dateSelect = document.getElementById('date-select') as HTMLSelectElement
@@ -19,6 +22,8 @@ const rescheduleId = sessionStorage.getItem('reschedule_id')
 
 let selectedSlot: { date: string; time: string } | null = null
 let bookedSlotKeys = new Set<string>()
+let isDoctorAvailable = true
+let loadedDoctorName = ''
 
 const SLOT_HOURS = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00']
 
@@ -81,7 +86,7 @@ async function initPage() {
     const [{ data: docData, error: docErr }, { data: existingAppts }] = await Promise.all([
       supabase
         .from('doctors')
-        .select('name, address, specialty, clinic_name, consultation_fee')
+        .select('*')
         .eq('id', doctorId)
         .single(),
       supabase
@@ -98,10 +103,10 @@ async function initPage() {
           .filter((a: any) => a.status !== 'Cancelled' && a.id !== rescheduleId)
           .map((a: any) => getISTSlotKey(a.appointment_time))
       )
-      renderSlots()
     }
 
     if (docData) {
+      loadedDoctorName = docData.name || 'Doctor'
       if (doctorNameEl) {
         doctorNameEl.textContent = rescheduleId ? `Reschedule with ${docData.name}` : docData.name
       }
@@ -112,9 +117,9 @@ async function initPage() {
         feeBadgeEl.textContent = `Fee: ₹${docData.consultation_fee}`
         feeBadgeEl.style.display = 'inline-flex'
       }
-      if (confirmBtn) {
-        confirmBtn.textContent = rescheduleId ? 'Confirm Reschedule' : 'Confirm Booking'
-      }
+
+      const resolvedAvailable = resolveDoctorAvailability(doctorId!, docData.is_available)
+      applyDoctorAvailability(resolvedAvailable)
 
       if (docData.address) {
         const mapContainer = document.getElementById('map-container')
@@ -127,11 +132,63 @@ async function initPage() {
         }
       }
     }
+
+    renderSlots()
   } catch (err: any) {
     console.error('Failed to load doctor:', err)
     if (doctorNameEl) doctorNameEl.textContent = 'Doctor Details Unavailable'
   }
 }
+
+function resolveDoctorAvailability(docId: string, dbValue?: unknown): boolean {
+  if (typeof dbValue === 'boolean') return dbValue
+  const local = localStorage.getItem(`careconnect_doc_availability_${docId}`)
+  if (local === 'false') return false
+  if (local === 'true') return true
+  return true
+}
+
+function applyDoctorAvailability(available: boolean) {
+  isDoctorAvailable = available
+  if (doctorAvailabilityPill && doctorAvailabilityText) {
+    doctorAvailabilityPill.style.display = 'inline-flex'
+    if (available) {
+      doctorAvailabilityPill.classList.remove('is-unavailable')
+      doctorAvailabilityText.textContent = 'Available for Appointments'
+    } else {
+      doctorAvailabilityPill.classList.add('is-unavailable')
+      doctorAvailabilityText.textContent = 'Currently Unavailable'
+    }
+  }
+
+  if (unavailableBanner) {
+    if (available) {
+      unavailableBanner.style.display = 'none'
+    } else {
+      unavailableBanner.style.display = 'block'
+      const safeName = loadedDoctorName || 'This doctor'
+      unavailableBanner.textContent = `${safeName} is currently marked as Unavailable. New appointment bookings are paused until they become available again.`
+    }
+  }
+
+  if (!available) {
+    selectedSlot = null
+    if (confirmBtn) {
+      confirmBtn.disabled = true
+      confirmBtn.textContent = 'Doctor Currently Unavailable'
+    }
+  } else if (confirmBtn) {
+    confirmBtn.textContent = rescheduleId ? 'Confirm Reschedule' : 'Confirm Booking'
+    confirmBtn.disabled = !selectedSlot
+  }
+}
+
+window.addEventListener('storage', (e) => {
+  if (!doctorId) return
+  if (e.key === `careconnect_doc_availability_${doctorId}` || e.key === 'careconnect_demo_db_v1') {
+    initPage()
+  }
+})
 
 function renderSlots() {
   if (!slotGrid) return
@@ -141,8 +198,8 @@ function renderSlots() {
   const todayIST = getISTDateParts(0).isoDate
 
   SLOT_HOURS.forEach((time, index) => {
-    let disabled = false
-    let isTaken = bookedSlotKeys.has(`${date}|${time}`)
+    let disabled = !isDoctorAvailable
+    const isTaken = bookedSlotKeys.has(`${date}|${time}`)
 
     if (date === todayIST) {
       const [h] = time.split(':').map(Number)
@@ -161,11 +218,12 @@ function renderSlots() {
     btn.disabled = disabled
     btn.style.animationDelay = `${index * 0.04}s`
 
-    if (selectedSlot && selectedSlot.date === date && selectedSlot.time === time) {
+    if (isDoctorAvailable && selectedSlot && selectedSlot.date === date && selectedSlot.time === time) {
       btn.classList.add('selected')
     }
 
     btn.onclick = () => {
+      if (!isDoctorAvailable) return
       selectedSlot = { date, time }
       renderSlots()
       if (confirmBtn) confirmBtn.disabled = false
@@ -182,6 +240,10 @@ dateSelect.addEventListener('change', () => {
 
 confirmBtn.addEventListener('click', async () => {
   if (errorMsg) errorMsg.textContent = ''
+  if (!isDoctorAvailable) {
+    if (errorMsg) errorMsg.textContent = 'This doctor is currently unavailable for bookings.'
+    return
+  }
   if (!selectedSlot) return
 
   confirmBtn.disabled = true

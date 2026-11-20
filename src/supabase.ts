@@ -92,6 +92,7 @@ function createInitialSeed(): DemoDatabase {
         education: 'MBBS, MD, DM',
         gender: 'Male',
         consultation_fee: 800,
+        is_available: true,
       },
       {
         id: doc2Id,
@@ -107,6 +108,7 @@ function createInitialSeed(): DemoDatabase {
         education: 'MBBS, MD (DVL)',
         gender: 'Female',
         consultation_fee: 650,
+        is_available: true,
       },
       {
         id: doc3Id,
@@ -122,6 +124,7 @@ function createInitialSeed(): DemoDatabase {
         education: 'MBBS, MD',
         gender: 'Male',
         consultation_fee: 500,
+        is_available: true,
       },
       {
         id: doc4Id,
@@ -137,6 +140,7 @@ function createInitialSeed(): DemoDatabase {
         education: 'MBBS, DCH, DNB',
         gender: 'Female',
         consultation_fee: 600,
+        is_available: true,
       },
       {
         id: doc5Id,
@@ -152,6 +156,7 @@ function createInitialSeed(): DemoDatabase {
         education: 'MBBS, MS (Ortho)',
         gender: 'Male',
         consultation_fee: 750,
+        is_available: true,
       },
     ],
     appointments: [

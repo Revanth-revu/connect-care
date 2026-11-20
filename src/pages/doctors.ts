@@ -23,6 +23,7 @@ type Doctor = {
   education: string
   gender: string
   consultation_fee?: number
+  is_available?: boolean
 }
 
 type Appointment = {
@@ -65,7 +66,7 @@ function renderDoctors(doctorsToRender: DoctorWithStats[]) {
   listEl.innerHTML = ''
 
   if (doctorsToRender.length === 0) {
-    listEl.innerHTML = `<div class="glass-panel"><p style="color: #aaa; text-align: center; margin: 0;">No doctors match your search criteria.</p></div>`
+    listEl.innerHTML = `<div class="glass-panel"><p style="color: #cbd5e1; text-align: center; margin: 0;">No doctors match your search criteria.</p></div>`
     return
   }
 
@@ -75,50 +76,64 @@ function renderDoctors(doctorsToRender: DoctorWithStats[]) {
     card.style.cursor = 'pointer'
     card.style.marginBottom = '0'
 
-    const availabilityColor = doc.availableToday > 0 ? '#4ade80' : '#ef4444'
-    const availabilityText = doc.availableToday > 0
-      ? `${doc.availableToday} slots left today`
-      : 'Fully booked today'
+    const localAvail = localStorage.getItem(`careconnect_doc_availability_${doc.id}`)
+    const effectiveAvailable =
+      typeof doc.is_available === 'boolean'
+        ? doc.is_available
+        : localAvail === 'false'
+          ? false
+          : true
+    const isManuallyUnavailable = !effectiveAvailable
+    const availabilityColor = isManuallyUnavailable
+      ? '#f87171'
+      : doc.availableToday > 0
+        ? '#4ade80'
+        : '#f87171'
+    const availabilityText = isManuallyUnavailable
+      ? 'Unavailable right now'
+      : doc.availableToday > 0
+        ? `Available · ${doc.availableToday} slots left today`
+        : 'Fully booked today'
     const feeText = doc.consultation_fee ? `₹${doc.consultation_fee}` : '₹500'
 
     card.innerHTML = `
       <div class="appointment-header" style="align-items: flex-start;">
         <div style="flex: 1;">
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px;">
-            <h3 style="margin: 0; color: #fff;">${escapeHtml(doc.name)} <span style="font-size: 0.8rem; color: #888; font-weight: 400;">(${escapeHtml(doc.gender || 'N/A')})</span></h3>
-            <span style="font-size: 0.72rem; background: rgba(255,255,255,0.08); padding: 2px 9px; border-radius: 10px; color: #ddd;">${escapeHtml(doc.education || 'MBBS')}</span>
+            <h3 style="margin: 0; color: #fff;">${escapeHtml(doc.name)} <span style="font-size: 0.82rem; color: #cbd5e1; font-weight: 400;">(${escapeHtml(doc.gender || 'N/A')})</span></h3>
+            <span style="font-size: 0.74rem; background: rgba(148,163,184,0.18); border: 1px solid rgba(148,163,184,0.3); padding: 2px 9px; border-radius: 10px; color: #f1f5f9;">${escapeHtml(doc.education || 'MBBS')}</span>
           </div>
 
-          <p style="color: #00BFA5; font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">${escapeHtml(doc.specialty)} • ${escapeHtml(doc.experience || 'Experienced')}</p>
-          <p style="font-size: 0.88rem; color: #ddd; margin-bottom: 4px;">${escapeHtml(doc.clinic_name)}</p>
-          <p style="color:#888; font-size:0.83rem;">📍 ${escapeHtml(doc.area)}</p>
+          <p style="color: #2dd4bf; font-weight: 600; font-size: 0.92rem; margin-bottom: 4px;">${escapeHtml(doc.specialty)} • ${escapeHtml(doc.experience || 'Experienced')}</p>
+          <p style="font-size: 0.9rem; color: #f1f5f9; margin-bottom: 4px;">${escapeHtml(doc.clinic_name)}</p>
+          <p style="color: #cbd5e1; font-size: 0.85rem;">📍 ${escapeHtml(doc.area)}</p>
         </div>
         <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
-          <div style="background: rgba(0, 137, 123, 0.2); min-width: 44px; height: 44px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 1px solid #00897B; box-shadow: 0 0 10px rgba(0, 137, 123, 0.3);">
+          <div style="background: rgba(0, 150, 136, 0.28); min-width: 44px; height: 44px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 1.5px solid #2dd4bf; box-shadow: 0 0 12px rgba(0, 191, 165, 0.3);">
             🩺
           </div>
-          <span style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #00BFA5; font-size: 1rem;">${feeText}</span>
+          <span style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #2dd4bf; font-size: 1.05rem;">${feeText}</span>
         </div>
       </div>
 
-      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; font-size: 0.83rem;">
-        <span style="color: #aaa;">Total Consultations: <strong style="color: #fff;">${doc.totalBooked}</strong></span>
-        <span style="color: ${availabilityColor}; font-weight: 500;">● ${availabilityText}</span>
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(148,163,184,0.2); display: flex; justify-content: space-between; font-size: 0.85rem;">
+        <span style="color: #cbd5e1;">Total Consultations: <strong style="color: #fff;">${doc.totalBooked}</strong></span>
+        <span style="color: ${availabilityColor}; font-weight: 600;">● ${availabilityText}</span>
       </div>
     `
 
     if (selectedId === doc.id) {
-      card.style.borderColor = '#00BFA5'
-      card.style.boxShadow = '0 0 20px rgba(0, 191, 165, 0.3)'
+      card.style.borderColor = '#2dd4bf'
+      card.style.boxShadow = '0 0 22px rgba(45, 212, 191, 0.35)'
     }
 
     card.onclick = () => {
       document.querySelectorAll('#doctor-list .appointment-card').forEach((el) => {
-        ;(el as HTMLElement).style.borderColor = 'rgba(255, 255, 255, 0.1)'
-        ;(el as HTMLElement).style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.4)'
+        ;(el as HTMLElement).style.borderColor = 'rgba(148, 163, 184, 0.24)'
+        ;(el as HTMLElement).style.boxShadow = '0 10px 26px rgba(0, 0, 0, 0.45)'
       })
-      card.style.borderColor = '#00BFA5'
-      card.style.boxShadow = '0 0 22px rgba(0, 191, 165, 0.32)'
+      card.style.borderColor = '#2dd4bf'
+      card.style.boxShadow = '0 0 24px rgba(45, 212, 191, 0.36)'
 
       selectedId = doc.id
       continueBtn.disabled = false
@@ -176,6 +191,15 @@ continueBtn.addEventListener('click', () => {
   if (!selectedId) return
   sessionStorage.setItem('doctor_id', selectedId)
   window.location.href = './booking.html'
+})
+
+window.addEventListener('storage', (e) => {
+  if (
+    e.key === 'careconnect_demo_db_v1' ||
+    (e.key && e.key.startsWith('careconnect_doc_availability_'))
+  ) {
+    loadDoctors()
+  }
 })
 
 loadDoctors()

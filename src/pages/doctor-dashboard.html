@@ -36,8 +36,20 @@
           <span class="cc-pulse-dot indigo"></span>
           <span id="live-clock">--:-- IST</span>
         </div>
-        <button type="button" id="availability-toggle" class="btn-neon-teal" style="padding: 8px 14px; font-size: 0.82rem;">
-          ● Accepting Patients
+        <button
+          type="button"
+          id="availability-toggle"
+          class="cc-availability-switch"
+          role="switch"
+          aria-checked="true"
+          aria-label="Toggle doctor availability status"
+          title="Click to switch availability"
+        >
+          <span class="cc-status-indicator" aria-hidden="true"></span>
+          <span class="cc-availability-label" id="availability-label">Available</span>
+          <span class="cc-switch-track" aria-hidden="true">
+            <span class="cc-switch-thumb"></span>
+          </span>
         </button>
         <button type="button" id="logout-btn" class="btn-neon-red">
           Logout
@@ -103,6 +115,10 @@
             <div style="min-width: 0;">
               <h2 id="doc-name" style="margin: 0; font-size: 1.12rem; color: #fff; font-family: 'Outfit', sans-serif;">Doctor</h2>
               <p id="doc-specialty" style="margin: 2px 0 0 0; font-size: 0.84rem; color: #a78bfa; font-weight: 500;">Specialist</p>
+              <div id="doc-profile-status-pill" class="cc-profile-status-pill">
+                <span class="cc-status-indicator" aria-hidden="true"></span>
+                <span id="doc-profile-status-text">Available for Bookings</span>
+              </div>
             </div>
           </div>
 
@@ -140,7 +156,7 @@
         <section class="cc-panel">
           <div class="cc-panel-header" style="margin-bottom: 12px;">
             <h2 class="cc-panel-title">Today's IST Slots</h2>
-            <span id="today-date-label" style="font-size: 0.76rem; color: #9ca3af;">Today</span>
+            <span id="today-date-label" style="font-size: 0.78rem; color: #cbd5e1;">Today</span>
           </div>
           <div id="today-timeline" class="cc-timeline"></div>
         </section>
@@ -151,7 +167,7 @@
         <div class="cc-panel">
           <div class="cc-panel-header">
             <h2 class="cc-panel-title">Patient Schedule &amp; Queue</h2>
-            <span id="queue-total-label" style="font-size: 0.8rem; color: #9ca3af;">0 total</span>
+            <span id="queue-total-label" style="font-size: 0.82rem; color: #cbd5e1; font-weight: 500;">0 total</span>
           </div>
 
           <div class="cc-toolbar">
@@ -170,7 +186,7 @@
           </div>
 
           <div id="doctor-appointments" class="cc-appt-list">
-            <p style="color: #aaa;">Loading schedule...</p>
+            <p style="color: #cbd5e1;">Loading schedule...</p>
           </div>
         </div>
       </section>
@@ -184,7 +200,7 @@
         <h3 class="cc-modal-title" id="notes-modal-title">Complete Consultation</h3>
         <button type="button" class="cc-modal-close" data-close-modal="notes-modal">×</button>
       </div>
-      <p id="notes-patient-label" style="color: #aaa; font-size: 0.85rem; margin: 0 0 14px 0;"></p>
+      <p id="notes-patient-label" style="color: #cbd5e1; font-size: 0.88rem; margin: 0 0 14px 0;"></p>
       <div class="input-group">
         <label for="consultation-notes">Clinical Notes / Prescription Summary (optional)</label>
         <textarea id="consultation-notes" rows="4" placeholder="e.g., Continue prescribed medication for 5 days, hydrate well, review if symptoms persist."></textarea>
@@ -200,11 +216,11 @@
         <h3 class="cc-modal-title">Teleconsultation Room</h3>
         <button type="button" class="cc-modal-close" data-close-modal="teleconsult-modal">×</button>
       </div>
-      <div style="background: linear-gradient(145deg, rgba(124,77,255,0.16), rgba(0,191,165,0.1)); border: 1px solid rgba(124,77,255,0.35); border-radius: 16px; padding: 28px 20px; text-align: center; margin-bottom: 18px;">
+      <div style="background: linear-gradient(145deg, rgba(124,77,255,0.2), rgba(0,191,165,0.12)); border: 1px solid rgba(167,139,250,0.45); border-radius: 16px; padding: 28px 20px; text-align: center; margin-bottom: 18px;">
         <div class="cc-avatar indigo" style="margin: 0 auto 12px; width: 64px; height: 64px; font-size: 1.4rem;">🎥</div>
         <h4 id="tele-patient-name" style="margin: 0 0 4px 0; color: #fff; font-size: 1.1rem;">Patient Call Ready</h4>
-        <p id="tele-patient-meta" style="margin: 0 0 14px 0; font-size: 0.84rem; color: #ccc;"></p>
-        <span class="status-badge" style="background: rgba(74, 222, 128, 0.16); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.4);">
+        <p id="tele-patient-meta" style="margin: 0 0 14px 0; font-size: 0.86rem; color: #e2e8f0;"></p>
+        <span class="status-badge" style="background: rgba(74, 222, 128, 0.2); color: #86efac; border: 1px solid rgba(74, 222, 128, 0.5);">
           ● Encrypted HD Session Active
         </span>
       </div>
@@ -222,7 +238,7 @@
         <h3 class="cc-modal-title">Decline Appointment?</h3>
         <button type="button" class="cc-modal-close" data-close-modal="decline-modal">×</button>
       </div>
-      <p style="color: #aaa; font-size: 0.9rem; margin: 0 0 22px 0;">
+      <p style="color: #cbd5e1; font-size: 0.92rem; margin: 0 0 22px 0;">
         Are you sure you want to decline this request? The appointment will be marked as Cancelled.
       </p>
       <div style="display: flex; gap: 12px;">

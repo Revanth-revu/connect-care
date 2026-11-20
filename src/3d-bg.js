@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 const canvas = document.getElementById('bg');
 
-if (canvas instanceof HTMLCanvasElement) {
+if (canvas instanceof HTMLCanvasElement && document.body.classList.contains('home-page')) {
   initThreeBackground(canvas);
 }
 

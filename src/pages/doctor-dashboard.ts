@@ -5,6 +5,9 @@ const listContainer = document.getElementById('doctor-appointments') as HTMLDivE
 const liveClockEl = document.getElementById('live-clock') as HTMLSpanElement
 const doctorGreetingEl = document.getElementById('doctor-greeting') as HTMLParagraphElement
 const availabilityToggle = document.getElementById('availability-toggle') as HTMLButtonElement
+const availabilityLabelEl = document.getElementById('availability-label') as HTMLSpanElement
+const docProfileStatusPill = document.getElementById('doc-profile-status-pill') as HTMLDivElement
+const docProfileStatusText = document.getElementById('doc-profile-status-text') as HTMLSpanElement
 
 const docAvatarEl = document.getElementById('doc-avatar') as HTMLDivElement
 const docNameEl = document.getElementById('doc-name') as HTMLHeadingElement
@@ -94,17 +97,40 @@ document.getElementById('logout-btn')?.addEventListener('click', () => {
   window.location.href = '/'
 })
 
-availabilityToggle.addEventListener('click', () => {
-  isAccepting = !isAccepting
-  if (isAccepting) {
-    availabilityToggle.className = 'btn-neon-teal'
-    availabilityToggle.textContent = '● Accepting Patients'
-    showToast('Status set to Accepting Patients', 'success')
+function applyAvailabilityUI(available: boolean) {
+  isAccepting = available
+  availabilityToggle.setAttribute('aria-checked', String(available))
+  if (available) {
+    availabilityToggle.classList.remove('is-unavailable')
+    availabilityLabelEl.textContent = 'Available'
+    docProfileStatusPill.classList.remove('is-unavailable')
+    docProfileStatusText.textContent = 'Available for Bookings'
   } else {
-    availabilityToggle.className = 'btn-neon-yellow'
-    availabilityToggle.textContent = '● In Consultation'
-    showToast('Status set to In Consultation', 'info')
+    availabilityToggle.classList.add('is-unavailable')
+    availabilityLabelEl.textContent = 'Unavailable'
+    docProfileStatusPill.classList.add('is-unavailable')
+    docProfileStatusText.textContent = 'Currently Unavailable'
   }
+}
+
+const storedAvailability = doctorId ? localStorage.getItem(`careconnect_doc_availability_${doctorId}`) : null
+if (storedAvailability !== null) {
+  applyAvailabilityUI(storedAvailability === 'true')
+} else {
+  applyAvailabilityUI(true)
+}
+
+availabilityToggle.addEventListener('click', async () => {
+  const nextState = !isAccepting
+  applyAvailabilityUI(nextState)
+  if (doctorId) {
+    localStorage.setItem(`careconnect_doc_availability_${doctorId}`, String(nextState))
+    await supabase.from('doctors').update({ is_available: nextState }).eq('id', doctorId)
+  }
+  showToast(
+    nextState ? 'Status updated: Available for Patients' : 'Status updated: Unavailable',
+    nextState ? 'success' : 'info'
+  )
 })
 
 function renderDoctorProfile() {
@@ -242,8 +268,8 @@ function renderQueue() {
 
   if (filtered.length === 0) {
     listContainer.innerHTML = `
-      <div style="text-align: center; padding: 36px 20px; border: 1px dashed rgba(255,255,255,0.12); border-radius: 16px;">
-        <p style="color: #9ca3af; margin: 0;">No appointments in this category.</p>
+      <div style="text-align: center; padding: 36px 20px; border: 1px dashed rgba(148,163,184,0.28); border-radius: 16px;">
+        <p style="color: #cbd5e1; margin: 0;">No appointments in this category.</p>
       </div>
     `
     return
@@ -491,6 +517,12 @@ async function loadDoctorSchedule() {
       area: docRecord.area || doctorProfile.area,
       education: docRecord.education || doctorProfile.education,
       consultation_fee: Number(docRecord.consultation_fee || doctorProfile.consultation_fee),
+    }
+    if (typeof docRecord.is_available === 'boolean') {
+      applyAvailabilityUI(docRecord.is_available)
+      if (doctorId) {
+        localStorage.setItem(`careconnect_doc_availability_${doctorId}`, String(docRecord.is_available))
+      }
     }
   }
 
